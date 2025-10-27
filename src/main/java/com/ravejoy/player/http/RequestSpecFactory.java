@@ -1,4 +1,4 @@
-﻿package com.ravejoy.player.http;
+package com.ravejoy.player.http;
 
 import static io.restassured.RestAssured.given;
 
@@ -63,6 +63,7 @@ public final class RequestSpecFactory {
                 .appendDefaultContentCharsetToContentTypeIfUndefined(false))
         .httpClient(
             HttpClientConfig.httpClientConfig()
-                .httpClientFactory(() -> HttpClientBuilder.create().setDefaultRequestConfig(rc).build()));
+                .httpClientFactory(
+                    () -> HttpClientBuilder.create().setDefaultRequestConfig(rc).build()));
   }
 }

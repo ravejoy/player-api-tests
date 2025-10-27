@@ -1,4 +1,4 @@
-﻿package com.ravejoy.player.http.filters;
+package com.ravejoy.player.http.filters;
 
 import io.restassured.filter.Filter;
 import io.restassured.filter.FilterContext;
@@ -22,7 +22,13 @@ public final class SafeHttpLoggingFilter implements Filter {
   private static final int MAX_BODY_LOG = 20_000;
 
   private static final Set<String> SENSITIVE_HEADERS =
-      Set.of("authorization", "cookie", "set-cookie", "proxy-authorization", "x-api-key", "x-auth-token");
+      Set.of(
+          "authorization",
+          "cookie",
+          "set-cookie",
+          "proxy-authorization",
+          "x-api-key",
+          "x-auth-token");
 
   private static final String[] SENSITIVE_FIELDS = {"password", "token", "secret", "key", "apikey"};
 
@@ -33,8 +39,13 @@ public final class SafeHttpLoggingFilter implements Filter {
 
   private final boolean enabled;
 
-  public SafeHttpLoggingFilter() { this(true); }
-  public SafeHttpLoggingFilter(boolean enabled) { this.enabled = enabled; }
+  public SafeHttpLoggingFilter() {
+    this(true);
+  }
+
+  public SafeHttpLoggingFilter(boolean enabled) {
+    this.enabled = enabled;
+  }
 
   @Override
   public Response filter(
@@ -67,7 +78,8 @@ public final class SafeHttpLoggingFilter implements Filter {
     Object body = req.getBody();
     if (body != null) {
       String masked = maskBody(body.toString());
-      if (masked.length() > MAX_BODY_LOG) masked = masked.substring(0, MAX_BODY_LOG) + "...[truncated]";
+      if (masked.length() > MAX_BODY_LOG)
+        masked = masked.substring(0, MAX_BODY_LOG) + "...[truncated]";
       sb.append("\n").append(masked);
     }
     return sb.toString();
@@ -78,11 +90,12 @@ public final class SafeHttpLoggingFilter implements Filter {
     sb.append("HTTP ").append(resp.statusCode()).append("\n");
     resp.getHeaders()
         .asList()
-        .forEach(h -> {
-          String name = h.getName();
-          String value = isSensitiveHeader(name) ? MASK : h.getValue();
-          sb.append(name).append(": ").append(value).append("\n");
-        });
+        .forEach(
+            h -> {
+              String name = h.getName();
+              String value = isSensitiveHeader(name) ? MASK : h.getValue();
+              sb.append(name).append(": ").append(value).append("\n");
+            });
     return sb.toString();
   }
 
@@ -94,7 +107,11 @@ public final class SafeHttpLoggingFilter implements Filter {
     String out = s;
     for (int i = 0; i < SENSITIVE_FIELDS.length; i++) {
       String key = SENSITIVE_FIELDS[i];
-      out = SENSITIVE_JSON_PATTERNS.get(i).matcher(out).replaceAll("\"" + key + "\":\"" + MASK + "\"");
+      out =
+          SENSITIVE_JSON_PATTERNS
+              .get(i)
+              .matcher(out)
+              .replaceAll("\"" + key + "\":\"" + MASK + "\"");
     }
     return out;
   }
@@ -103,7 +120,8 @@ public final class SafeHttpLoggingFilter implements Filter {
     if (uri == null) return null;
     String out = uri;
     for (String key : SENSITIVE_FIELDS) {
-      out = out.replaceAll("(?i)([?&])" + Pattern.quote(key) + "=([^&#]*)", "$1" + key + "=" + MASK);
+      out =
+          out.replaceAll("(?i)([?&])" + Pattern.quote(key) + "=([^&#]*)", "$1" + key + "=" + MASK);
     }
     return out;
   }
