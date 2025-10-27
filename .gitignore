@@ -16,3 +16,7 @@ Thumbs.db
 # Local props
 src/test/resources/application-*.properties
 !src/test/resources/*.example.properties
+
+# Allure results and reports
+allure-results/
+allure-report/
