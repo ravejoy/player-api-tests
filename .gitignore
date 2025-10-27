@@ -1,0 +1,17 @@
+﻿# Gradle
+.gradle/
+build/
+out/
+bin/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local props (реальні файли не комітимо)
+src/test/resources/application*.properties
