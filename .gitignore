@@ -13,5 +13,6 @@ bin/
 .DS_Store
 Thumbs.db
 
-# Local props (реальні файли не комітимо)
-src/test/resources/application*.properties
+# Local props
+src/test/resources/application-*.properties
+!src/test/resources/*.example.properties
