@@ -21,6 +21,7 @@ repositories {
 dependencies {
   implementation("io.rest-assured:rest-assured:5.5.0")
   implementation("org.apache.httpcomponents:httpclient:4.5.14")
+  implementation("ch.qos.logback:logback-classic:1.4.14")
 
   testImplementation("org.testng:testng:7.11.0")
   testImplementation("io.qameta.allure:allure-testng:2.29.0")
