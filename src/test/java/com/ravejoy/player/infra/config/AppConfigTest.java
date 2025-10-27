@@ -1,5 +1,6 @@
-package com.ravejoy.player.config;
+package com.ravejoy.player.infra.config;
 
+import com.ravejoy.player.config.AppConfig;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
