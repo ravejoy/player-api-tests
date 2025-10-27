@@ -1,1 +1,1 @@
-﻿rootProject.name = "player-api-tests"
+rootProject.name = "player-api-tests"

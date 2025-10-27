@@ -18,14 +18,16 @@ public final class ConfigLoader {
       Path p = Path.of(fileName);
       if (Files.exists(p)) {
         try (var in = Files.newInputStream(p);
-             var r = new InputStreamReader(in, StandardCharsets.UTF_8)) {
+            var r = new InputStreamReader(in, StandardCharsets.UTF_8)) {
           props.load(r);
           return;
         }
       }
-    } catch (IOException ignored) { }
+    } catch (IOException ignored) {
+    }
 
-    try (InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream(fileName)) {
+    try (InputStream in =
+        Thread.currentThread().getContextClassLoader().getResourceAsStream(fileName)) {
       if (in != null) {
         try (var r = new InputStreamReader(in, StandardCharsets.UTF_8)) {
           props.load(r);
@@ -53,7 +55,10 @@ public final class ConfigLoader {
     String raw = System.getProperty(key);
     if (raw == null) raw = System.getenv(toEnvKey(key));
     if (raw == null) raw = props.getProperty(key);
-    try { return (raw == null) ? def : Integer.parseInt(raw.trim()); }
-    catch (NumberFormatException e) { return def; }
+    try {
+      return (raw == null) ? def : Integer.parseInt(raw.trim());
+    } catch (NumberFormatException e) {
+      return def;
+    }
   }
 }
