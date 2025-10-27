@@ -36,7 +36,6 @@ dependencies {
 tasks.test {
   useTestNG {
     suites("src/test/resources/testng.xml")
-    listeners.add("com.ravejoy.player.listeners.LoggingTestListener")
 
     System.getProperty("groups")?.takeIf { it.isNotBlank() }?.let {
       includeGroups(*it.split(',').map(String::trim).toTypedArray())
