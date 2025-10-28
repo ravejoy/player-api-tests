@@ -1,0 +1,66 @@
+name: Build & Quality Gate
+
+on:
+  push:
+    branches: [main, "feat/**", "refactor/**"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: read
+
+env:
+  JAVA_VERSION: "21"
+  GRADLE_OPTS: -Dorg.gradle.daemon=false
+
+jobs:
+  ci:
+    name: Build & Infra Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: gradle
+
+      - name: Validate Gradle Wrapper
+        uses: gradle/actions/wrapper-validation@v3
+
+      - name: Validate required repo variables
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ -n "${{ vars.API_URL }}" ]] || { echo "Missing vars.API_URL"; exit 1; }
+          [[ -n "${{ vars.THREADS }}" ]] || { echo "Missing vars.THREADS"; exit 1; }
+          [[ -n "${{ vars.LOG_LEVEL }}" ]] || { echo "Missing vars.LOG_LEVEL"; exit 1; }
+          [[ -n "${{ vars.SONAR_ORG }}" ]] || { echo "Missing vars.SONAR_ORG"; exit 1; }
+          [[ -n "${{ vars.SONAR_PROJECT_KEY }}" ]] || { echo "Missing vars.SONAR_PROJECT_KEY"; exit 1; }
+
+      - name: Code Style Check
+        run: ./gradlew --no-daemon spotlessCheck --stacktrace
+
+      - name: Build
+        run: ./gradlew --no-daemon clean build -x test --stacktrace
+
+      - name: Infra (incl. Health)
+        run: |
+          ./gradlew --no-daemon test \
+          "-Dgroups=infra" \
+          "-Denv=qa" \
+          "-Dapi.url=${{ vars.API_URL }}" \
+          "-Dthreads=${{ vars.THREADS }}" \
+          "-DLOG_LEVEL=${{ vars.LOG_LEVEL }}" \
+          --stacktrace
