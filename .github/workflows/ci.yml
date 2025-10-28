@@ -45,22 +45,22 @@ jobs:
       - name: Build
         run: ./gradlew --no-daemon clean build -x test --stacktrace
 
-      - name: Preflight: check API reachability
+      - name: "Preflight: check API reachability"
         run: |
           echo "Pinging ${{ vars.API_URL }}/player/get/all ..."
           curl -s -S -D - "${{ vars.API_URL }}/player/get/all" -o /dev/null || exit 1
 
-      - name: Infra (incl. Health) with HTTP debug
+      - name: "Infra (incl. Health) with HTTP debug"
         run: |
           ./gradlew --no-daemon test \
-          "-Dgroups=infra" \
-          "-Denv=qa" \
-          "-Dapi.url=${{ vars.API_URL }}" \
-          "-Dthreads=${{ vars.THREADS }}" \
-          "-DLOG_LEVEL=${{ vars.LOG_LEVEL }}" \
-          "-Dhttp.mask=true" \
-          "-Dhttp.log=true" \
-          --stacktrace --info
+            "-Dgroups=infra" \
+            "-Denv=qa" \
+            "-Dapi.url=${{ vars.API_URL }}" \
+            "-Dthreads=${{ vars.THREADS }}" \
+            "-DLOG_LEVEL=${{ vars.LOG_LEVEL }}" \
+            "-Dhttp.mask=true" \
+            "-Dhttp.log=true" \
+            --stacktrace --info
 
       - name: Coverage Report
         if: success()
@@ -78,8 +78,19 @@ jobs:
           if-no-files-found: warn
           retention-days: 7
 
+      - name: Detect Sonar token
+        shell: bash
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          if [ -n "$SONAR_TOKEN" ]; then
+            echo "HAS_SONAR=true" >> "$GITHUB_ENV"
+          else
+            echo "HAS_SONAR=false" >> "$GITHUB_ENV"
+          fi
+
       - name: SonarCloud Scan
-        if: ${{ (github.event_name == 'push' || github.event_name == 'pull_request') && secrets.SONAR_TOKEN != '' }}
+        if: ${{ (github.event_name == 'push' || github.event_name == 'pull_request') && env.HAS_SONAR == 'true' }}
         uses: SonarSource/sonarcloud-github-action@v2
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
