@@ -39,23 +39,18 @@ jobs:
       - name: Validate Gradle Wrapper
         uses: gradle/actions/wrapper-validation@v3
 
-      - name: Validate required repo variables
-        shell: bash
-        run: |
-          set -euo pipefail
-          [[ -n "${{ vars.API_URL }}" ]] || { echo "Missing vars.API_URL"; exit 1; }
-          [[ -n "${{ vars.THREADS }}" ]] || { echo "Missing vars.THREADS"; exit 1; }
-          [[ -n "${{ vars.LOG_LEVEL }}" ]] || { echo "Missing vars.LOG_LEVEL"; exit 1; }
-          [[ -n "${{ vars.SONAR_ORG }}" ]] || { echo "Missing vars.SONAR_ORG"; exit 1; }
-          [[ -n "${{ vars.SONAR_PROJECT_KEY }}" ]] || { echo "Missing vars.SONAR_PROJECT_KEY"; exit 1; }
-
       - name: Code Style Check
         run: ./gradlew --no-daemon spotlessCheck --stacktrace
 
       - name: Build
         run: ./gradlew --no-daemon clean build -x test --stacktrace
 
-      - name: Infra (incl. Health)
+      - name: Preflight: check API reachability
+        run: |
+          echo "Pinging ${{ vars.API_URL }}/player/get/all ..."
+          curl -s -S -D - "${{ vars.API_URL }}/player/get/all" -o /dev/null || exit 1
+
+      - name: Infra (incl. Health) with HTTP debug
         run: |
           ./gradlew --no-daemon test \
           "-Dgroups=infra" \
@@ -63,4 +58,38 @@ jobs:
           "-Dapi.url=${{ vars.API_URL }}" \
           "-Dthreads=${{ vars.THREADS }}" \
           "-DLOG_LEVEL=${{ vars.LOG_LEVEL }}" \
-          --stacktrace
+          "-Dhttp.mask=true" \
+          "-Dhttp.log=true" \
+          --stacktrace --info
+
+      - name: Coverage Report
+        if: success()
+        run: ./gradlew --no-daemon jacocoTestReport --stacktrace
+
+      - name: Upload Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports
+          path: |
+            build/reports/tests/test/**
+            build/test-results/test/**
+            build/reports/jacoco/**
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: SonarCloud Scan
+        if: ${{ (github.event_name == 'push' || github.event_name == 'pull_request') && secrets.SONAR_TOKEN != '' }}
+        uses: SonarSource/sonarcloud-github-action@v2
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          args: >
+            -Dsonar.organization=${{ vars.SONAR_ORG }}
+            -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
+            -Dsonar.host.url=https://sonarcloud.io
+            -Dsonar.java.binaries=build/classes/java/main
+            -Dsonar.junit.reportPaths=build/test-results/test
+            -Dsonar.java.coveragePlugin=jacoco
+            -Dsonar.coverage.jacoco.xmlReportPaths=build/reports/jacoco/test/jacocoTestReport.xml
