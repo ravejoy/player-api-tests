@@ -1,0 +1,23 @@
+# Gradle
+.gradle/
+build/
+out/
+bin/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Local props
+src/test/resources/application-*.properties
+!src/test/resources/*.example.properties
+
+# Allure results and reports
+.allure/
+allure-results/
+allure-report/

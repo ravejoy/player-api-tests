@@ -1,0 +1,131 @@
+name: Build & Quality Gate
+
+on:
+  push:
+    branches: [main, "feat/**", "refactor/**"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: read
+
+env:
+  JAVA_VERSION: "21"
+  GRADLE_OPTS: -Dorg.gradle.daemon=false
+
+jobs:
+  ci:
+    name: Build & Infra Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: gradle
+
+      - name: Validate Gradle Wrapper (retry)
+        id: wrapper
+        continue-on-error: true
+        run: |
+          for i in 1 2 3; do
+            echo "Wrapper validation attempt $i/3"
+            if gradle -v >/dev/null 2>&1; then break; fi
+            sleep 5
+          done
+
+      - name: Ensure gradlew is executable
+        run: chmod +x ./gradlew
+
+      - name: Validate required repo variables
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ -n "${{ vars.API_URL }}" ]] || { echo "Missing vars.API_URL"; exit 1; }
+          [[ -n "${{ vars.THREADS }}" ]] || { echo "Missing vars.THREADS"; exit 1; }
+          [[ -n "${{ vars.LOG_LEVEL }}" ]] || { echo "Missing vars.LOG_LEVEL"; exit 1; }
+
+      - name: Prepare test config
+        run: |
+          mkdir -p src/test/resources
+          cat <<EOF > src/test/resources/application-qa.properties
+          api.url=${{ vars.API_URL }}
+          threads=${{ vars.THREADS }}
+          EOF
+
+      - name: Code Style Check
+        run: ./gradlew --no-daemon spotlessCheck --stacktrace
+
+      - name: Build
+        run: ./gradlew --no-daemon clean build -x test --stacktrace
+
+      - name: Infra Tests & Health Check
+        run: |
+          ./gradlew --no-daemon test \
+          "-Dgroups=infra" \
+          "-Denv=qa" \
+          "-DLOG_LEVEL=${{ vars.LOG_LEVEL }}" \
+          --stacktrace
+
+      - name: Coverage Report
+        if: success()
+        run: ./gradlew --no-daemon jacocoTestReport --stacktrace
+
+      - name: Upload Reports
+        if: ${{ always() && (hashFiles('build/reports/tests/test/**') != '' || hashFiles('build/reports/jacoco/**') != '') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports
+          path: |
+            build/reports/tests/test/**
+            build/test-results/test/**
+            build/reports/jacoco/**
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Detect Sonar token
+        shell: bash
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          if [ -n "${SONAR_TOKEN}" ]; then
+            echo "HAS_SONAR=true" >> "$GITHUB_ENV"
+          else
+            echo "HAS_SONAR=false" >> "$GITHUB_ENV"
+          fi
+
+      - name: Validate Sonar variables
+        if: env.HAS_SONAR == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ -n "${{ vars.SONAR_ORG }}" ]] || { echo "Missing vars.SONAR_ORG"; exit 1; }
+          [[ -n "${{ vars.SONAR_PROJECT_KEY }}" ]] || { echo "Missing vars.SONAR_PROJECT_KEY"; exit 1; }
+
+      - name: SonarCloud Scan
+        if: ${{ (github.event_name == 'push' || github.event_name == 'pull_request') && env.HAS_SONAR == 'true' }}
+        uses: SonarSource/sonarcloud-github-action@v2
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          args: >
+            -Dsonar.organization=${{ vars.SONAR_ORG }}
+            -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
+            -Dsonar.host.url=https://sonarcloud.io
+            -Dsonar.java.binaries=build/classes/java/main
+            -Dsonar.junit.reportPaths=build/test-results/test
+            -Dsonar.java.coveragePlugin=jacoco
+            -Dsonar.coverage.jacoco.xmlReportPaths=build/reports/jacoco/test/jacocoTestReport.xml
