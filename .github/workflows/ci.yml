@@ -71,23 +71,13 @@ jobs:
       - name: Build
         run: ./gradlew --no-daemon clean build -x test --stacktrace
 
-      - name: Run Infra tests
-        id: tests
+      - name: Infra Tests & Health Check
         run: |
-          ATTEMPTS=2
-          for i in $(seq 1 $ATTEMPTS); do
-            echo "Test run $i/$ATTEMPTS"
-            if ./gradlew --no-daemon test \
-                "-Dgroups=infra" \
-                "-Denv=qa" \
-                "-DLOG_LEVEL=${{ vars.LOG_LEVEL }}" \
-                --stacktrace; then
-              exit 0
-            fi
-            echo "Retrying tests in 10s..."
-            sleep 10
-          done
-          exit 1
+          ./gradlew --no-daemon test \
+          "-Dgroups=infra" \
+          "-Denv=qa" \
+          "-DLOG_LEVEL=${{ vars.LOG_LEVEL }}" \
+          --stacktrace
 
       - name: Coverage Report
         if: success()
