@@ -27,7 +27,9 @@ public class SafeHttpLoggingFilterTest {
     server.shutdown();
   }
 
-  @Test(description = "Ensures SafeHttpLoggingFilter masks only logs and never alters on-wire headers/body")
+  @Test(
+      description =
+          "Ensures SafeHttpLoggingFilter masks only logs and never alters on-wire headers/body")
   public void shouldNotMutateWireData() throws InterruptedException {
     server.enqueue(new MockResponse().setResponseCode(StatusCode.OK));
 
