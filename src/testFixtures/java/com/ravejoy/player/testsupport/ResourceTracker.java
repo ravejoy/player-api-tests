@@ -4,7 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class ResourceTracker {
-  private static final ThreadLocal<List<Long>> CREATED_PLAYER_IDS = ThreadLocal.withInitial(ArrayList::new);
+  private static final ThreadLocal<List<Long>> CREATED_PLAYER_IDS =
+      ThreadLocal.withInitial(ArrayList::new);
 
   private ResourceTracker() {}
 

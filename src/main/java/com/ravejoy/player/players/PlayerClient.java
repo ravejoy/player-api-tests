@@ -41,8 +41,7 @@ public final class PlayerClient {
   }
 
   public PlayerGetByPlayerIdResponseDto getById(long id) {
-    return api
-        .post(PlayerEndpoints.GET, new PlayerGetByPlayerIdRequestDto(id))
+    return api.post(PlayerEndpoints.GET, new PlayerGetByPlayerIdRequestDto(id))
         .as(PlayerGetByPlayerIdResponseDto.class);
   }
 
@@ -51,8 +50,7 @@ public final class PlayerClient {
   }
 
   public PlayerUpdateResponseDto update(String editor, long id, PlayerUpdateRequestDto dto) {
-    return api
-        .patch(PlayerEndpoints.UPDATE + editor + "/" + id, dto)
+    return api.patch(PlayerEndpoints.UPDATE + editor + "/" + id, dto)
         .as(PlayerUpdateResponseDto.class);
   }
 }

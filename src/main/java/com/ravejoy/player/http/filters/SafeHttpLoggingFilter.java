@@ -96,6 +96,14 @@ public final class SafeHttpLoggingFilter implements Filter {
               String value = isSensitiveHeader(name) ? MASK : h.getValue();
               sb.append(name).append(": ").append(value).append("\n");
             });
+    String body = (resp.getBody() != null) ? resp.getBody().asString() : null;
+    if (body != null && !body.isBlank()) {
+      String masked = maskBody(body);
+      if (masked.length() > MAX_BODY_LOG) {
+        masked = masked.substring(0, MAX_BODY_LOG) + "...[truncated]";
+      }
+      sb.append("\n").append(masked);
+    }
     return sb.toString();
   }
 

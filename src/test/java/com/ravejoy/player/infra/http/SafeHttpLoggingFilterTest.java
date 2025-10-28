@@ -1,11 +1,17 @@
 package com.ravejoy.player.infra.http;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import com.ravejoy.player.http.StatusCode;
 import com.ravejoy.player.http.filters.SafeHttpLoggingFilter;
 import io.restassured.RestAssured;
 import java.io.IOException;
+import java.util.stream.Collectors;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
+import org.slf4j.LoggerFactory;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -54,5 +60,44 @@ public class SafeHttpLoggingFilterTest {
     Assert.assertEquals(recorded.getHeader("Cookie"), "session=xyz");
     Assert.assertTrue(recorded.getBody().readUtf8().contains("secret"));
     Assert.assertEquals(response.statusCode(), StatusCode.OK);
+  }
+
+  @Test(
+      description =
+          "Masks sensitive fields in response body logging while preserving raw on-wire response")
+  public void shouldMaskSensitiveFieldsInResponseBodyLog() {
+    String responseJson = "{\"password\":\"abc123\",\"token\":\"t1\",\"username\":\"john\"}";
+    server.enqueue(new MockResponse().setBody(responseJson).setResponseCode(StatusCode.OK));
+
+    Logger logger = (Logger) LoggerFactory.getLogger(SafeHttpLoggingFilter.class);
+    Level prev = logger.getLevel();
+    ListAppender<ILoggingEvent> appender = new ListAppender<>();
+    appender.start();
+    logger.setLevel(Level.DEBUG);
+    logger.addAppender(appender);
+
+    var response =
+        RestAssured.given()
+            .baseUri(server.url("/").toString())
+            .filter(new SafeHttpLoggingFilter(true))
+            .when()
+            .get("/")
+            .then()
+            .extract()
+            .response();
+
+    String logs =
+        appender.list.stream()
+            .map(ILoggingEvent::getFormattedMessage)
+            .collect(Collectors.joining("\n"));
+
+    logger.detachAppender(appender);
+    logger.setLevel(prev);
+
+    Assert.assertEquals(response.statusCode(), StatusCode.OK);
+    Assert.assertTrue(response.asString().contains("\"password\":\"abc123\""));
+    Assert.assertTrue(logs.contains("\"password\":\"****\""));
+    Assert.assertFalse(logs.contains("\"password\":\"abc123\""));
+    Assert.assertTrue(logs.contains("HTTP 200"));
   }
 }

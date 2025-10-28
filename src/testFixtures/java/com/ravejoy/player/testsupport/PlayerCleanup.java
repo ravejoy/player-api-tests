@@ -18,20 +18,25 @@ public final class PlayerCleanup {
     for (Long id : ids) {
       try {
         client.delete(editor, id);
-      } catch (Exception ignored) {}
+      } catch (Exception ignored) {
+      }
     }
   }
 
   public void sweepByPrefix(String editor, String prefix) {
     try {
       PlayerGetAllResponseDto all = client.getAll();
-      Predicate<PlayerItem> p =
-          i -> i.screenName() != null && i.screenName().startsWith(prefix);
-      all.players().stream().filter(p).forEach(i -> {
-        try {
-          client.delete(editor, i.id());
-        } catch (Exception ignored) {}
-      });
-    } catch (Exception ignored) {}
+      Predicate<PlayerItem> p = i -> i.screenName() != null && i.screenName().startsWith(prefix);
+      all.players().stream()
+          .filter(p)
+          .forEach(
+              i -> {
+                try {
+                  client.delete(editor, i.id());
+                } catch (Exception ignored) {
+                }
+              });
+    } catch (Exception ignored) {
+    }
   }
 }
