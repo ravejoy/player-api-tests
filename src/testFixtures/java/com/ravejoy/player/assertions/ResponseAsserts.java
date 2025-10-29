@@ -13,8 +13,7 @@ public final class ResponseAsserts {
 
   public static void assertOkJson(Response resp) {
     assertEquals(resp.statusCode(), StatusCode.OK, "status");
-    String ct = resp.getHeader(HttpHeader.CONTENT_TYPE);
-    assertTrue(ct != null && ct.toLowerCase().startsWith(MediaType.APPLICATION_JSON), "content-type");
+    assertJson(resp);
   }
 
   public static void assertStatus(Response resp, int expected) {
@@ -23,6 +22,15 @@ public final class ResponseAsserts {
 
   public static void assertJson(Response resp) {
     String ct = resp.getHeader(HttpHeader.CONTENT_TYPE);
-    assertTrue(ct != null && ct.toLowerCase().startsWith(MediaType.APPLICATION_JSON), "content-type");
+    assertTrue(
+        ct != null && ct.toLowerCase().startsWith(MediaType.APPLICATION_JSON), "content-type");
+  }
+
+  public static void assertJsonOrEmpty(Response resp) {
+    String ct = resp.getHeader(HttpHeader.CONTENT_TYPE);
+    String body = resp.getBody() != null ? resp.getBody().asString() : null;
+    boolean empty = body == null || body.isBlank();
+    boolean isJson = ct != null && ct.toLowerCase().startsWith(MediaType.APPLICATION_JSON);
+    assertTrue(empty || isJson, "content-type-or-empty");
   }
 }

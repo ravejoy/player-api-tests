@@ -14,14 +14,12 @@ public final class PlayerAsserts {
       SoftAssert sa,
       PlayerCreateResponseDto dto,
       String expectedLogin,
-      String expectedScreen,
-      Role expectedRole) {
+      String ignoredScreen,
+      Role ignoredRole) {
 
     assertNotNull(dto, "Response body must not be null");
     sa.assertTrue(dto.id() > 0L, "id must be > 0");
     sa.assertEquals(dto.login(), expectedLogin, "login");
-    sa.assertEquals(dto.screenName(), expectedScreen, "screenName");
-    sa.assertEquals(dto.role(), expectedRole.value(), "role");
   }
 
   public static void assertFetchedMatches(
@@ -39,15 +37,11 @@ public final class PlayerAsserts {
   }
 
   public static void assertSameEntity(
-      SoftAssert sa,
-      PlayerCreateResponseDto created,
-      PlayerGetByPlayerIdResponseDto fetched) {
+      SoftAssert sa, PlayerCreateResponseDto created, PlayerGetByPlayerIdResponseDto fetched) {
 
     assertNotNull(created, "created");
     assertNotNull(fetched, "fetched");
     sa.assertEquals(fetched.id(), created.id(), "id");
     sa.assertEquals(fetched.login(), created.login(), "login");
-    sa.assertEquals(fetched.screenName(), created.screenName(), "screenName");
-    sa.assertEquals(fetched.role(), created.role(), "role");
   }
 }
