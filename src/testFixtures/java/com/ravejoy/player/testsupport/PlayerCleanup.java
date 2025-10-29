@@ -3,10 +3,15 @@ package com.ravejoy.player.testsupport;
 import com.ravejoy.player.players.PlayerClient;
 import com.ravejoy.player.players.dto.PlayerGetAllResponseDto;
 import com.ravejoy.player.players.dto.PlayerItem;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.function.Predicate;
+import java.util.Set;
 
 public final class PlayerCleanup {
+
+  private static final int MAX_RETRIES = 3;
+  private static final long RETRY_SLEEP_MS = 200L;
 
   private final PlayerClient client;
 
@@ -15,64 +20,85 @@ public final class PlayerCleanup {
   }
 
   public void deleteByIds(String editor, List<Long> ids) {
-    for (Long id : ids) {
-      deleteWithRetry(editor, id);
+    if (ids == null || ids.isEmpty()) {
+      System.out.println("[CLEANUP][deleteByIds] nothing to delete");
+      return;
+    }
+    final List<Long> unique = new ArrayList<>(new LinkedHashSet<>(ids));
+    System.out.printf("[CLEANUP][deleteByIds] editor=%s ids=%s%n", editor, unique);
+
+    Set<Long> remaining = new LinkedHashSet<>(unique);
+    int attempt = 1;
+
+    while (!remaining.isEmpty() && attempt <= MAX_RETRIES) {
+      for (Long id : new ArrayList<>(remaining)) {
+        try {
+          client.delete(editor, id);
+          System.out.printf("[CLEANUP][DELETE] id=%d%n", id);
+        } catch (Exception e) {
+          System.out.printf("[CLEANUP][DELETE][ERROR] id=%d err=%s%n", id, e.toString());
+        }
+      }
+      sleep(RETRY_SLEEP_MS);
+      remaining = idsStillPresent(remaining);
+      if (!remaining.isEmpty()) {
+        System.out.printf("[CLEANUP][VERIFY] attempt=%d still=%s%n", attempt, remaining);
+      }
+      attempt++;
+    }
+
+    if (!remaining.isEmpty()) {
+      System.out.printf("[CLEANUP][WARN] leftover=%s%n", remaining);
+    } else {
+      System.out.println("[CLEANUP][OK] no leftovers");
     }
   }
 
   public void sweepByPrefix(String editor, String prefix) {
-    int passes = 0;
-    int deletedThisPass;
-    do {
-      passes++;
-      deletedThisPass = 0;
-
-      PlayerGetAllResponseDto all;
-      try {
-        all = client.getAll();
-      } catch (Exception e) {
+    System.out.printf("[CLEANUP][sweep] editor=%s prefix=%s%n", editor, prefix);
+    try {
+      PlayerGetAllResponseDto all = client.getAll();
+      if (all == null || all.players() == null || all.players().isEmpty()) {
+        System.out.println("[CLEANUP][sweep] no players");
         return;
       }
 
-      Predicate<PlayerItem> match =
-          i -> i.screenName() != null && i.screenName().startsWith(prefix);
-
-      for (PlayerItem i : all.players()) {
-        if (match.test(i)) {
-          if (deleteWithRetry(editor, i.id())) {
-            deletedThisPass++;
-          }
+      List<Long> toDelete = new ArrayList<>();
+      for (PlayerItem p : all.players()) {
+        String screen = p.screenName();
+        if (screen != null && screen.startsWith(prefix)) {
+          toDelete.add(p.id());
         }
       }
 
-      if (deletedThisPass > 0) {
-        try {
-          Thread.sleep(150L);
-        } catch (InterruptedException ie) {
-          Thread.currentThread().interrupt();
-          break;
-        }
-      }
-    } while (deletedThisPass > 0 && passes < 5);
+      System.out.printf("[CLEANUP][sweep] found=%s%n", toDelete);
+      deleteByIds(editor, toDelete);
+
+    } catch (Exception e) {
+      System.out.printf("[CLEANUP][sweep][ERROR] err=%s%n", e.toString());
+    }
   }
 
-  private boolean deleteWithRetry(String editor, long id) {
-    int attempts = 0;
-    while (attempts < 3) {
-      attempts++;
-      try {
-        client.delete(editor, id);
-        return true;
-      } catch (Exception ignored) {
+  private Set<Long> idsStillPresent(Set<Long> ids) {
+    Set<Long> present = new LinkedHashSet<>();
+    try {
+      PlayerGetAllResponseDto all = client.getAll();
+      if (all == null || all.players() == null) return present;
+      for (PlayerItem p : all.players()) {
+        if (ids.contains(p.id())) {
+          present.add(p.id());
+        }
       }
-
-      try {
-        Thread.sleep(100L * attempts);
-      } catch (InterruptedException ie) {
-        Thread.currentThread().interrupt();
-        break;
-      }
+    } catch (Exception e) {
+      System.out.printf("[CLEANUP][VERIFY][ERROR] err=%s%n", e.toString());
     }
-    return false;
+    return present;
+  }
+
+  private static void sleep(long ms) {
+    try {
+      Thread.sleep(ms);
+    } catch (InterruptedException ignored) {
+    }
   }
 }
