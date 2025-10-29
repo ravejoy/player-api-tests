@@ -14,7 +14,6 @@ import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;
 
 public final class RequestSpecFactory {
-
   private RequestSpecFactory() {}
 
   public static RequestSpecification defaultSpec(Filter... filters) {
@@ -27,6 +26,8 @@ public final class RequestSpecFactory {
 
     if (Boolean.getBoolean("http.mask")) {
       spec.filter(new SafeHttpLoggingFilter(true));
+    } else {
+      spec.filter(new SafeHttpLoggingFilter());
     }
 
     String logMode = System.getProperty("http.log", "false");
@@ -38,7 +39,9 @@ public final class RequestSpecFactory {
           .filter(new ResponseLoggingFilter(LogDetail.STATUS));
     }
 
-    if (filters != null) for (Filter f : filters) spec.filter(f);
+    if (filters != null) {
+      for (Filter f : filters) spec.filter(f);
+    }
 
     return spec;
   }

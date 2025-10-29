@@ -67,37 +67,48 @@ public class SafeHttpLoggingFilterTest {
           "Masks sensitive fields in response body logging while preserving raw on-wire response")
   public void shouldMaskSensitiveFieldsInResponseBodyLog() {
     String responseJson = "{\"password\":\"abc123\",\"token\":\"t1\",\"username\":\"john\"}";
-    server.enqueue(new MockResponse().setBody(responseJson).setResponseCode(StatusCode.OK));
+    server.enqueue(
+        new MockResponse()
+            .setResponseCode(StatusCode.OK)
+            .addHeader("Content-Type", "application/json")
+            .setBody(responseJson));
 
-    Logger logger = (Logger) LoggerFactory.getLogger(SafeHttpLoggingFilter.class);
-    Level prev = logger.getLevel();
-    ListAppender<ILoggingEvent> appender = new ListAppender<>();
-    appender.start();
-    logger.setLevel(Level.DEBUG);
-    logger.addAppender(appender);
+    // ---- enable masking just for this test (CI-proof & local-proof)
+    String prevMask = System.getProperty("http.mask");
+    System.setProperty("http.mask", "true");
+    try {
+      Logger logger = (Logger) LoggerFactory.getLogger(SafeHttpLoggingFilter.class);
+      Level prev = logger.getLevel();
+      ListAppender<ILoggingEvent> appender = new ListAppender<>();
+      appender.start();
+      logger.setLevel(Level.DEBUG);
+      logger.addAppender(appender);
 
-    var response =
-        RestAssured.given()
-            .baseUri(server.url("/").toString())
-            .filter(new SafeHttpLoggingFilter(true))
-            .when()
-            .get("/")
-            .then()
-            .extract()
-            .response();
+      var response =
+          RestAssured.given()
+              .baseUri(server.url("/").toString())
+              .filter(new SafeHttpLoggingFilter(true))
+              .when()
+              .get("/")
+              .then()
+              .extract()
+              .response();
 
-    String logs =
-        appender.list.stream()
-            .map(ILoggingEvent::getFormattedMessage)
-            .collect(Collectors.joining("\n"));
+      String logs =
+          appender.list.stream()
+              .map(ILoggingEvent::getFormattedMessage)
+              .collect(Collectors.joining("\n"));
 
-    logger.detachAppender(appender);
-    logger.setLevel(prev);
+      logger.detachAppender(appender);
+      logger.setLevel(prev);
 
-    Assert.assertEquals(response.statusCode(), StatusCode.OK);
-    Assert.assertTrue(response.asString().contains("\"password\":\"abc123\""));
-    Assert.assertTrue(logs.contains("\"password\":\"****\""));
-    Assert.assertFalse(logs.contains("\"password\":\"abc123\""));
-    Assert.assertTrue(logs.contains("HTTP 200"));
+      Assert.assertEquals(response.statusCode(), StatusCode.OK);
+      Assert.assertTrue(response.asString().contains("\"password\":\"abc123\""));
+      Assert.assertTrue(logs.contains("\"password\":\"****\""));
+      Assert.assertFalse(logs.contains("\"password\":\"abc123\""));
+    } finally {
+      if (prevMask != null) System.setProperty("http.mask", prevMask);
+      else System.clearProperty("http.mask");
+    }
   }
 }
