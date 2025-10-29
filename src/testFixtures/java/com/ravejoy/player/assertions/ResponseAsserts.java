@@ -12,10 +12,17 @@ public final class ResponseAsserts {
   private ResponseAsserts() {}
 
   public static void assertOkJson(Response resp) {
-    assertEquals(resp.statusCode(), StatusCode.OK, "Unexpected status code");
+    assertEquals(resp.statusCode(), StatusCode.OK, "status");
     String ct = resp.getHeader(HttpHeader.CONTENT_TYPE);
-    assertTrue(
-        ct != null && ct.toLowerCase().startsWith(MediaType.APPLICATION_JSON),
-        "Content-Type should be application/json");
+    assertTrue(ct != null && ct.toLowerCase().startsWith(MediaType.APPLICATION_JSON), "content-type");
+  }
+
+  public static void assertStatus(Response resp, int expected) {
+    assertEquals(resp.statusCode(), expected, "status");
+  }
+
+  public static void assertJson(Response resp) {
+    String ct = resp.getHeader(HttpHeader.CONTENT_TYPE);
+    assertTrue(ct != null && ct.toLowerCase().startsWith(MediaType.APPLICATION_JSON), "content-type");
   }
 }
