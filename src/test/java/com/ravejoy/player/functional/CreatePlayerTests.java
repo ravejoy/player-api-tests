@@ -1,81 +1,64 @@
 package com.ravejoy.player.functional;
 
+import com.ravejoy.player.assertions.PlayerAsserts;
+import com.ravejoy.player.assertions.ResponseAsserts;
 import com.ravejoy.player.players.dto.PlayerCreateResponseDto;
 import com.ravejoy.player.steps.PlayerSteps;
 import com.ravejoy.player.testsupport.*;
 import com.ravejoy.player.testsupport.helper.PlayerLookup;
-import io.qameta.allure.Description;
-import io.qameta.allure.Issue;
-import io.qameta.allure.Story;
+import io.qameta.allure.*;
 import io.restassured.response.Response;
 import java.util.stream.Stream;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import org.testng.asserts.SoftAssert;
 
+@Epic("Player API")
+@Feature("Create")
 @Story("Create player")
 public class CreatePlayerTests {
 
-  @DataProvider
+  @DataProvider(name = "supervisorMatrix", parallel = true)
   public Object[][] supervisorMatrix() {
     return Stream.of(new Object[] {Role.USER}, new Object[] {Role.ADMIN}).toArray(Object[][]::new);
   }
 
-  @Description("Supervisor creates USER/ADMIN and player appears in system")
+  @Description("Supervisor creates USER/ADMIN and the player is persisted (verified via lookup)")
   @Test(
       dataProvider = "supervisorMatrix",
       groups = {Groups.FUNCTIONAL})
   public void supervisorCreatesPlayer(Role targetRole) {
     var steps = new PlayerSteps();
+    final String login = RunIds.login(targetRole.value());
+    final String screen = RunIds.screen("scr");
 
-    var login = RunIds.login(targetRole.value());
-    var screen = RunIds.screen("scr");
-
-    int before = PlayerLookup.countByPrefix(RunIds.prefix());
-
-    Response createResp =
-        steps.createRaw(
-            Editor.SUPERVISOR.value(),
-            login,
-            screen,
-            targetRole.value(),
-            24,
-            Gender.MALE,
-            Password.VALID);
-
-    var created = createResp.as(PlayerCreateResponseDto.class);
+    Response createResp = steps.createAsSupervisor(login, screen, targetRole);
+    ResponseAsserts.assertOkJson(createResp);
 
     var sa = new SoftAssert();
-    sa.assertTrue(created != null && created.id() > 0L, "Created id should be positive");
+    var created = createResp.as(PlayerCreateResponseDto.class);
+    PlayerAsserts.assertCreatedMatches(sa, created, login, screen, targetRole);
 
     var fetched = PlayerLookup.getById(created.id());
-    sa.assertEquals(fetched.login(), login, "Login mismatch");
+    PlayerAsserts.assertFetchedMatches(sa, fetched, login, screen, targetRole);
+    PlayerAsserts.assertSameEntity(sa, created, fetched);
 
-    int after = PlayerLookup.countByPrefix(RunIds.prefix());
-    sa.assertEquals(after, before + 1, "Players count with prefix should increase by 1");
-
+    sa.assertTrue(
+        PlayerLookup.existsByScreenName(screen), "Persisted list should contain screenName");
     sa.assertAll();
   }
 
-  @Issue("@Issue(\"RBAC-01\")")
-  @Description("[KNOWN ISSUE] Admin creates USER expected 200, actual 403")
+  @Issue("RBAC-01")
+  @Description("[KNOWN ISSUE] Admin creates USER: expected 200 OK, currently returns 403 Forbidden")
   @Test(groups = {Groups.KNOWN_ISSUES})
-  public void adminCreatesUser() {
+  public void adminCreatesUser_knownIssue() {
     var steps = new PlayerSteps();
+    final String login = RunIds.login(Role.USER.value());
+    final String screen = RunIds.screen("scr");
 
-    var login = RunIds.login("user");
-    var screen = RunIds.screen("scr");
+    var resp = steps.createAsAdmin(login, screen, Role.USER);
 
-    var resp =
-        steps.createRaw(
-            Editor.ADMIN.value(),
-            login,
-            screen,
-            Role.USER.value(),
-            24,
-            Gender.MALE,
-            Password.VALID);
-
-    org.testng.Assert.assertEquals(resp.statusCode(), 200);
+    ResponseAsserts.assertStatus(resp, com.ravejoy.player.http.StatusCode.OK);
+    ResponseAsserts.assertJsonOrEmpty(resp);
   }
 }
