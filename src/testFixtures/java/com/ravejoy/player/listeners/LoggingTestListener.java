@@ -1,79 +1,56 @@
 package com.ravejoy.player.listeners;
 
+import com.ravejoy.player.testsupport.RunIds;
 import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
-import org.testng.*;
+import org.testng.ITestContext;
+import org.testng.ITestListener;
+import org.testng.ITestResult;
 
-public class LoggingTestListener implements ITestListener {
+public final class LoggingTestListener implements ITestListener {
   private static final Logger log = LoggerFactory.getLogger(LoggingTestListener.class);
+  private static final String START_NANOS = "startNanos";
 
   @Override
-  public void onStart(ITestContext ctx) {
-    var suite = ctx.getSuite().getXmlSuite();
-    var xt = ctx.getCurrentXmlTest();
-    var mode = xt != null ? xt.getParallel() : suite.getParallel();
-    var tc = xt != null ? xt.getThreadCount() : suite.getThreadCount();
-    log.info(
-        "===> Suite start: {} | test={} | url={} | threads={} | parallel={}",
-        ctx.getSuite().getName(),
-        xt != null ? xt.getName() : "(n/a)",
-        com.ravejoy.player.config.AppConfig.apiUrl(),
-        com.ravejoy.player.config.AppConfig.threads(),
-        mode + "(" + tc + ")");
+  public void onTestStart(ITestResult tr) {
+    String testName = tr.getTestClass().getName() + "#" + tr.getMethod().getMethodName();
+    MDC.put("test", testName);
+    MDC.put("thread", Thread.currentThread().getName());
+    MDC.put("runId", RunIds.prefix());
+    tr.setAttribute(START_NANOS, System.nanoTime());
+    log.info("START {} params={}", testName, Arrays.toString(tr.getParameters()));
   }
 
   @Override
-  public void onFinish(ITestContext ctx) {
-    log.info(
-        "<=== Suite finish: {} | passed={}, failed={}, skipped={}",
-        ctx.getName(),
-        ctx.getPassedTests().size(),
-        ctx.getFailedTests().size(),
-        ctx.getSkippedTests().size());
+  public void onTestSuccess(ITestResult tr) {
+    String testName = tr.getTestClass().getName() + "#" + tr.getMethod().getMethodName();
+    Long t = (Long) tr.getAttribute(START_NANOS);
+    long ms = t == null ? 0L : (System.nanoTime() - t) / 1_000_000L;
+    log.info("PASS {} durationMs={}", testName, ms);
+    MDC.clear();
   }
 
   @Override
-  public void onTestStart(ITestResult r) {
-    String id = id(r);
-    MDC.put("testName", id);
-    log.info("START {} params={}", id, Arrays.toString(r.getParameters()));
+  public void onTestFailure(ITestResult tr) {
+    String testName = tr.getTestClass().getName() + "#" + tr.getMethod().getMethodName();
+    Long t = (Long) tr.getAttribute(START_NANOS);
+    long ms = t == null ? 0L : (System.nanoTime() - t) / 1_000_000L;
+    log.error("FAIL {} durationMs={}", testName, ms);
+    MDC.clear();
   }
 
   @Override
-  public void onTestSuccess(ITestResult r) {
-    log.info("PASS  {} in {} ms", id(r), durationMs(r));
-    MDC.remove("testName");
+  public void onTestSkipped(ITestResult tr) {
+    String testName = tr.getTestClass().getName() + "#" + tr.getMethod().getMethodName();
+    log.warn("SKIP {}", testName);
+    MDC.clear();
   }
 
   @Override
-  public void onTestFailure(ITestResult r) {
-    log.error("FAIL  {} in {} ms - {}", id(r), durationMs(r), r.getThrowable());
-    MDC.remove("testName");
-  }
+  public void onStart(ITestContext context) {}
 
   @Override
-  public void onTestSkipped(ITestResult r) {
-    log.warn("SKIP  {}", id(r));
-    MDC.remove("testName");
-  }
-
-  @Override
-  public void onTestFailedWithTimeout(ITestResult r) {
-    onTestFailure(r);
-  }
-
-  @Override
-  public void onTestFailedButWithinSuccessPercentage(ITestResult r) {
-    MDC.remove("testName");
-  }
-
-  private static String id(ITestResult r) {
-    return r.getTestClass().getName() + "#" + r.getMethod().getMethodName();
-  }
-
-  private static long durationMs(ITestResult r) {
-    return r.getEndMillis() - r.getStartMillis();
-  }
+  public void onFinish(ITestContext context) {}
 }
