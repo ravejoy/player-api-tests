@@ -73,34 +73,42 @@ public class SafeHttpLoggingFilterTest {
             .addHeader("Content-Type", "application/json")
             .setBody(responseJson));
 
-    Logger logger = (Logger) LoggerFactory.getLogger(SafeHttpLoggingFilter.class);
-    Level prev = logger.getLevel();
-    ListAppender<ILoggingEvent> appender = new ListAppender<>();
-    appender.start();
-    logger.setLevel(Level.DEBUG);
-    logger.addAppender(appender);
+    // ---- enable masking just for this test (CI-proof & local-proof)
+    String prevMask = System.getProperty("http.mask");
+    System.setProperty("http.mask", "true");
+    try {
+      Logger logger = (Logger) LoggerFactory.getLogger(SafeHttpLoggingFilter.class);
+      Level prev = logger.getLevel();
+      ListAppender<ILoggingEvent> appender = new ListAppender<>();
+      appender.start();
+      logger.setLevel(Level.DEBUG);
+      logger.addAppender(appender);
 
-    var response =
-        RestAssured.given()
-            .baseUri(server.url("/").toString())
-            .filter(new SafeHttpLoggingFilter(true))
-            .when()
-            .get("/")
-            .then()
-            .extract()
-            .response();
+      var response =
+          RestAssured.given()
+              .baseUri(server.url("/").toString())
+              .filter(new SafeHttpLoggingFilter(true))
+              .when()
+              .get("/")
+              .then()
+              .extract()
+              .response();
 
-    String logs =
-        appender.list.stream()
-            .map(ILoggingEvent::getFormattedMessage)
-            .collect(Collectors.joining("\n"));
+      String logs =
+          appender.list.stream()
+              .map(ILoggingEvent::getFormattedMessage)
+              .collect(Collectors.joining("\n"));
 
-    logger.detachAppender(appender);
-    logger.setLevel(prev);
+      logger.detachAppender(appender);
+      logger.setLevel(prev);
 
-    Assert.assertEquals(response.statusCode(), StatusCode.OK);
-    Assert.assertTrue(response.asString().contains("\"password\":\"abc123\""));
-    Assert.assertTrue(logs.contains("\"password\":\"****\""));
-    Assert.assertFalse(logs.contains("\"password\":\"abc123\""));
+      Assert.assertEquals(response.statusCode(), StatusCode.OK);
+      Assert.assertTrue(response.asString().contains("\"password\":\"abc123\""));
+      Assert.assertTrue(logs.contains("\"password\":\"****\""));
+      Assert.assertFalse(logs.contains("\"password\":\"abc123\""));
+    } finally {
+      if (prevMask != null) System.setProperty("http.mask", prevMask);
+      else System.clearProperty("http.mask");
+    }
   }
 }
