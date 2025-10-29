@@ -74,5 +74,4 @@ public final class PlayerClient {
     return api.patch(PlayerEndpoints.UPDATE + editor + "/" + id, dto)
         .as(PlayerUpdateResponseDto.class);
   }
-
 }

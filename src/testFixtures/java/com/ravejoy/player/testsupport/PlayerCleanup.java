@@ -3,7 +3,6 @@ package com.ravejoy.player.testsupport;
 import com.ravejoy.player.players.PlayerClient;
 import com.ravejoy.player.players.dto.PlayerGetAllResponseDto;
 import com.ravejoy.player.players.dto.PlayerItem;
-
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -64,7 +63,8 @@ public final class PlayerCleanup {
       try {
         client.delete(editor, id);
         return true;
-      } catch (Exception ignored) {}
+      } catch (Exception ignored) {
+      }
 
       try {
         Thread.sleep(100L * attempts);
