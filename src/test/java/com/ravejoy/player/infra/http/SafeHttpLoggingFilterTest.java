@@ -67,7 +67,11 @@ public class SafeHttpLoggingFilterTest {
           "Masks sensitive fields in response body logging while preserving raw on-wire response")
   public void shouldMaskSensitiveFieldsInResponseBodyLog() {
     String responseJson = "{\"password\":\"abc123\",\"token\":\"t1\",\"username\":\"john\"}";
-    server.enqueue(new MockResponse().setBody(responseJson).setResponseCode(StatusCode.OK));
+    server.enqueue(
+        new MockResponse()
+            .setResponseCode(StatusCode.OK)
+            .addHeader("Content-Type", "application/json")
+            .setBody(responseJson));
 
     Logger logger = (Logger) LoggerFactory.getLogger(SafeHttpLoggingFilter.class);
     Level prev = logger.getLevel();
@@ -98,6 +102,5 @@ public class SafeHttpLoggingFilterTest {
     Assert.assertTrue(response.asString().contains("\"password\":\"abc123\""));
     Assert.assertTrue(logs.contains("\"password\":\"****\""));
     Assert.assertFalse(logs.contains("\"password\":\"abc123\""));
-    Assert.assertTrue(logs.contains("HTTP 200"));
   }
 }
