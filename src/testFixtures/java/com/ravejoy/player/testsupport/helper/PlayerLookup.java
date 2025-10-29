@@ -19,11 +19,12 @@ public final class PlayerLookup {
   }
 
   public static int countByPrefix(String prefix) {
-    return (int) items().stream()
-        .map(PlayerItem::screenName)
-        .filter(Objects::nonNull)
-        .filter(s -> s.startsWith(prefix))
-        .count();
+    return (int)
+        items().stream()
+            .map(PlayerItem::screenName)
+            .filter(Objects::nonNull)
+            .filter(s -> s.startsWith(prefix))
+            .count();
   }
 
   public static int count(Predicate<PlayerItem> filter) {

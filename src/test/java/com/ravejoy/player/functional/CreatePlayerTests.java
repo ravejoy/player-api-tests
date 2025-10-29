@@ -18,14 +18,13 @@ public class CreatePlayerTests {
 
   @DataProvider
   public Object[][] supervisorMatrix() {
-    return Stream.of(
-            new Object[] {Role.USER},
-            new Object[] {Role.ADMIN})
-        .toArray(Object[][]::new);
+    return Stream.of(new Object[] {Role.USER}, new Object[] {Role.ADMIN}).toArray(Object[][]::new);
   }
 
   @Description("Supervisor creates USER/ADMIN and player appears in system")
-  @Test(dataProvider = "supervisorMatrix", groups = {Groups.FUNCTIONAL})
+  @Test(
+      dataProvider = "supervisorMatrix",
+      groups = {Groups.FUNCTIONAL})
   public void supervisorCreatesPlayer(Role targetRole) {
     var steps = new PlayerSteps();
 
@@ -36,7 +35,13 @@ public class CreatePlayerTests {
 
     Response createResp =
         steps.createRaw(
-            Editor.SUPERVISOR.value(), login, screen, targetRole.value(), 24, Gender.MALE, Password.VALID);
+            Editor.SUPERVISOR.value(),
+            login,
+            screen,
+            targetRole.value(),
+            24,
+            Gender.MALE,
+            Password.VALID);
 
     var created = createResp.as(PlayerCreateResponseDto.class);
 
@@ -63,7 +68,13 @@ public class CreatePlayerTests {
 
     var resp =
         steps.createRaw(
-            Editor.ADMIN.value(), login, screen, Role.USER.value(), 24, Gender.MALE, Password.VALID);
+            Editor.ADMIN.value(),
+            login,
+            screen,
+            Role.USER.value(),
+            24,
+            Gender.MALE,
+            Password.VALID);
 
     org.testng.Assert.assertEquals(resp.statusCode(), 200);
   }

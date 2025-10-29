@@ -1,6 +1,10 @@
 package com.ravejoy.player.testsupport;
 
-public interface Groups {
-  String FUNCTIONAL = "functional";
-  String RBAC = "rbac";
+public final class Groups {
+  private Groups() {}
+
+  public static final String INFRA = "infra";
+  public static final String FUNCTIONAL = "functional";
+  public static final String RBAC = "rbac";
+  public static final String KNOWN_ISSUES = "known-issues";
 }
