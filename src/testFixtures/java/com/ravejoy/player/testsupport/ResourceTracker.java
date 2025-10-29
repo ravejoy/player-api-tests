@@ -2,24 +2,33 @@ package com.ravejoy.player.testsupport;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public final class ResourceTracker {
-  private static final ThreadLocal<List<Long>> CREATED_PLAYER_IDS =
-      ThreadLocal.withInitial(ArrayList::new);
+
+  private static final ThreadLocal<Queue<Long>> TL_QUEUE =
+      ThreadLocal.withInitial(ConcurrentLinkedQueue::new);
 
   private ResourceTracker() {}
 
   public static void registerPlayer(long id) {
-    CREATED_PLAYER_IDS.get().add(id);
+    if (id > 0L) {
+      TL_QUEUE.get().add(id);
+    }
   }
 
   public static List<Long> drainPlayers() {
-    List<Long> copy = new ArrayList<>(CREATED_PLAYER_IDS.get());
-    CREATED_PLAYER_IDS.get().clear();
-    return copy;
+    Queue<Long> q = TL_QUEUE.get();
+    var drained = new ArrayList<Long>(q.size());
+    Long id;
+    while ((id = q.poll()) != null) {
+      drained.add(id);
+    }
+    return drained;
   }
 
   public static void clear() {
-    CREATED_PLAYER_IDS.get().clear();
+    TL_QUEUE.get().clear();
   }
 }

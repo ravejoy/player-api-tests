@@ -29,6 +29,7 @@ dependencies {
   testImplementation("ch.qos.logback:logback-classic:1.4.14")
   testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
   testImplementation("org.mockito:mockito-core:5.12.0")
+  testImplementation("com.fasterxml.jackson.core:jackson-databind:2.17.2")
   testImplementation(testFixtures(project(":")))
 
   testFixturesImplementation("io.rest-assured:rest-assured:5.5.0")
@@ -36,23 +37,41 @@ dependencies {
 }
 
 tasks.test {
-  useTestNG {
-    suites("src/test/resources/testng.xml")
+    useTestNG {
+        suites("src/test/resources/testng.xml")
 
-    System.getProperty("groups")?.takeIf { it.isNotBlank() }?.let {
-      includeGroups(*it.split(',').map(String::trim).toTypedArray())
-    }
-    System.getProperty("excludeGroups")?.takeIf { it.isNotBlank() }?.let {
-      excludeGroups(*it.split(',').map(String::trim).toTypedArray())
-    }
-  }
+        fun firstNonBlank(vararg keys: String): String? =
+            keys.asSequence()
+                .mapNotNull { System.getProperty(it) }
+                .map { it.trim() }
+                .firstOrNull { it.isNotEmpty() }
 
-  testLogging {
-    events = setOf(TestLogEvent.PASSED, TestLogEvent.FAILED, TestLogEvent.SKIPPED)
-    showStandardStreams = true
-    exceptionFormat = TestExceptionFormat.FULL
-  }
+        firstNonBlank("testng.groups", "groups")
+            ?.split(',')
+            ?.map { it.trim() }
+            ?.filter { it.isNotEmpty() }
+            ?.toTypedArray()
+            ?.let { includeGroups(*it) }
+
+        firstNonBlank("testng.excludeGroups", "excludeGroups")
+            ?.split(',')
+            ?.map { it.trim() }
+            ?.filter { it.isNotEmpty() }
+            ?.toTypedArray()
+            ?.let { excludeGroups(*it) }
+    }
+
+    testLogging {
+        events = setOf(
+            org.gradle.api.tasks.testing.logging.TestLogEvent.PASSED,
+            org.gradle.api.tasks.testing.logging.TestLogEvent.FAILED,
+            org.gradle.api.tasks.testing.logging.TestLogEvent.SKIPPED
+        )
+        showStandardStreams = true
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+    }
 }
+
 
 jacoco {
   toolVersion = "0.8.12"

@@ -76,14 +76,14 @@ jobs:
       - name: Infra Tests & Health Check
         run: |
           ./gradlew --no-daemon test \
-          "-Dgroups=infra" \
+          "-Dtestng.groups=infra" \
           "-Denv=qa" \
           "-DLOG_LEVEL=${{ vars.LOG_LEVEL }}" \
           --stacktrace
 
       - name: Coverage Report
         if: success()
-        run: ./gradlew --no-daemon jacocoTestReport --stacktrace
+        run: ./gradlew --no-daemon jacocoTestReport "-Dtestng.groups=infra" --stacktrace
 
       - name: Upload Reports
         if: ${{ always() && (hashFiles('build/reports/tests/test/**') != '' || hashFiles('build/reports/jacoco/**') != '') }}
