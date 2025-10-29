@@ -1,13 +1,20 @@
 <!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd" >
-<suite name="Player API Suite" verbose="1">
-  <listeners>
-    <listener class-name="com.ravejoy.player.listeners.ParallelOverrideListener"/>
-    <listener class-name="com.ravejoy.player.listeners.LoggingTestListener"/>
-  </listeners>
-
+<suite name="Player API Suite" verbose="1" parallel="methods">
   <test name="infra" parallel="none">
     <packages>
-      <package name="com.ravejoy.player.infra.*"/>
+      <package name="com.ravejoy.player.infra"/>
+    </packages>
+  </test>
+
+  <test name="functional">
+    <groups>
+      <run>
+        <include name="functional"/>
+        <include name="rbac"/>
+      </run>
+    </groups>
+    <packages>
+      <package name="com.ravejoy.player.functional"/>
     </packages>
   </test>
 </suite>
