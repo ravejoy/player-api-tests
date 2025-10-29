@@ -33,7 +33,9 @@ public final class SafeHttpLoggingFilter implements Filter {
     this.maxBody = Integer.parseInt(System.getProperty("http.log.maxBody", "4000"));
   }
 
-  public SafeHttpLoggingFilter(boolean ignoredLegacyArg) { this(); }
+  public SafeHttpLoggingFilter(boolean ignoredLegacyArg) {
+    this();
+  }
 
   @Override
   public Response filter(
@@ -77,8 +79,13 @@ public final class SafeHttpLoggingFilter implements Filter {
     long tookMs = Duration.between(start, Instant.now()).toMillis();
 
     String contentType = response.getContentType();
-    log.info("[HTTP] ← {} {}ms | status={} contentType={} corrId={}",
-        requestLine, tookMs, response.getStatusCode(), dash(contentType), corrId);
+    log.info(
+        "[HTTP] ← {} {}ms | status={} contentType={} corrId={}",
+        requestLine,
+        tookMs,
+        response.getStatusCode(),
+        dash(contentType),
+        corrId);
 
     if (log.isDebugEnabled()) {
       String rhdrs =
@@ -138,9 +145,15 @@ public final class SafeHttpLoggingFilter implements Filter {
       if (!changed) return uri;
 
       String newQuery = String.join("&", pairs);
-      URI masked = new URI(
-          u.getScheme(), u.getUserInfo(), u.getHost(), u.getPort(),
-          u.getPath(), newQuery, u.getFragment());
+      URI masked =
+          new URI(
+              u.getScheme(),
+              u.getUserInfo(),
+              u.getHost(),
+              u.getPort(),
+              u.getPath(),
+              newQuery,
+              u.getFragment());
       return masked.toString();
     } catch (URISyntaxException e) {
       return uri;
@@ -162,13 +175,20 @@ public final class SafeHttpLoggingFilter implements Filter {
   }
 
   private static String safeBody(Response r) {
-    try { return new String(r.asByteArray(), StandardCharsets.UTF_8); }
-    catch (Throwable t) { return "<unreadable>"; }
+    try {
+      return new String(r.asByteArray(), StandardCharsets.UTF_8);
+    } catch (Throwable t) {
+      return "<unreadable>";
+    }
   }
 
   private static String prettyJsonOrRaw(String raw) {
-    try { JsonNode n = OM.readTree(raw); return OM.writeValueAsString(n); }
-    catch (Throwable ignore) { return raw; }
+    try {
+      JsonNode n = OM.readTree(raw);
+      return OM.writeValueAsString(n);
+    } catch (Throwable ignore) {
+      return raw;
+    }
   }
 
   private static String trim(String s, int max) {
@@ -176,23 +196,31 @@ public final class SafeHttpLoggingFilter implements Filter {
     return s.substring(0, max) + "...(truncated," + s.length() + "B)";
   }
 
-  private static String dash(String s) { return (s == null || s.isBlank()) ? "-" : s; }
+  private static String dash(String s) {
+    return (s == null || s.isBlank()) ? "-" : s;
+  }
 
-  private static boolean notBlank(String s) { return s != null && !s.isBlank(); }
+  private static boolean notBlank(String s) {
+    return s != null && !s.isBlank();
+  }
 
   private static String toCurl(FilterableRequestSpecification req, String maskedBody) {
-    StringBuilder b = new StringBuilder("curl -X ")
-        .append(req.getMethod())
-        .append(" '")
-        .append(maskUri(req.getURI()))
-        .append("'");
+    StringBuilder b =
+        new StringBuilder("curl -X ")
+            .append(req.getMethod())
+            .append(" '")
+            .append(maskUri(req.getURI()))
+            .append("'");
     if (req.getHeaders() != null) {
-      req.getHeaders().asList().forEach(h ->
-          b.append(" -H '")
-              .append(h.getName())
-              .append(": ")
-              .append(maskHeader(h.getName(), h.getValue()))
-              .append("'"));
+      req.getHeaders()
+          .asList()
+          .forEach(
+              h ->
+                  b.append(" -H '")
+                      .append(h.getName())
+                      .append(": ")
+                      .append(maskHeader(h.getName(), h.getValue()))
+                      .append("'"));
     }
     if (notBlank(maskedBody)) {
       b.append(" --data-raw '").append(maskedBody.replace("'", "'\"'\"'")).append("'");
