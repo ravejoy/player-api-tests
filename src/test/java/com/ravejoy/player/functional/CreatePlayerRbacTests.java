@@ -3,8 +3,7 @@ package com.ravejoy.player.functional;
 import static com.ravejoy.player.http.StatusCode.FORBIDDEN;
 import static org.testng.Assert.assertEquals;
 
-import com.ravejoy.player.http.ApiClient;
-import com.ravejoy.player.players.PlayerClient;
+import com.ravejoy.player.steps.PlayerSteps;
 import com.ravejoy.player.testsupport.Editor;
 import com.ravejoy.player.testsupport.Gender;
 import com.ravejoy.player.testsupport.Groups;
@@ -38,10 +37,10 @@ public class CreatePlayerRbacTests {
       dataProvider = "rbacMatrix",
       groups = {Groups.FUNCTIONAL, Groups.RBAC})
   public void rbacRestrictions(Editor editor, String targetRole, int expectedStatus) {
-    var client = new PlayerClient(new ApiClient());
+    var steps = new PlayerSteps();
 
     var resp =
-        client.createRaw(
+        steps.createRaw(
             editor.value(),
             RunIds.login(targetRole),
             RunIds.screen(targetRole),
