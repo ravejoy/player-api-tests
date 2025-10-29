@@ -58,7 +58,7 @@ public final class PlayerClient {
   }
 
   public void delete(String editor, long playerId) {
-    api.delete(PlayerEndpoints.DELETE + editor, new PlayerDeleteRequestDto(playerId));
+    api.deleteWithBody(PlayerEndpoints.DELETE + editor, new PlayerDeleteRequestDto(playerId));
   }
 
   public PlayerGetByPlayerIdResponseDto getById(long id) {
