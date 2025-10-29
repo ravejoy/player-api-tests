@@ -1,12 +1,20 @@
 <configuration>
-  <property name="LOG_LEVEL" value="${LOG_LEVEL:-INFO}"/>
-  <property name="PATTERN"   value="%d{HH:mm:ss.SSS} %-5level [T:%thread] %logger{36} [%X{testName}] - %msg%n"/>
-
   <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
-    <encoder><pattern>${PATTERN}</pattern></encoder>
+    <encoder>
+      <charset>UTF-8</charset>
+      <pattern>%d{HH:mm:ss.SSS} %-5level [T:%thread] %logger{36} [test=%X{test} runId=%X{runId} corrId=%X{corrId}] - %msg%n</pattern>
+    </encoder>
   </appender>
 
-  <root level="${LOG_LEVEL}">
+  <logger name="com.ravejoy.player.http.filters.SafeHttpLoggingFilter" level="DEBUG" additivity="false">
+    <appender-ref ref="CONSOLE"/>
+  </logger>
+
+  <logger name="com.ravejoy.player.listeners" level="INFO" additivity="false">
+    <appender-ref ref="CONSOLE"/>
+  </logger>
+
+  <root level="${LOG_LEVEL:-INFO}">
     <appender-ref ref="CONSOLE"/>
   </root>
 </configuration>
