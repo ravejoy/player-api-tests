@@ -1,9 +1,7 @@
 package com.ravejoy.player.functional;
 
 import static com.ravejoy.player.http.StatusCode.OK;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.*;
 
 import com.ravejoy.player.http.ApiClient;
 import com.ravejoy.player.players.PlayerClient;
@@ -12,56 +10,56 @@ import com.ravejoy.player.testsupport.Editor;
 import com.ravejoy.player.testsupport.Gender;
 import com.ravejoy.player.testsupport.Groups;
 import com.ravejoy.player.testsupport.HttpHeader;
+import com.ravejoy.player.testsupport.MediaType;
 import com.ravejoy.player.testsupport.Password;
 import com.ravejoy.player.testsupport.ResourceTracker;
 import com.ravejoy.player.testsupport.Role;
 import com.ravejoy.player.testsupport.RunIds;
 import io.qameta.allure.Description;
-import io.qameta.allure.Epic;
-import io.qameta.allure.Feature;
 import io.qameta.allure.Story;
+import io.restassured.response.Response;
 import java.util.stream.Stream;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-@Epic("Player API")
-@Feature("Create Player")
+@Story("Positive flow")
 public class CreatePlayerPositiveTests {
 
-  @DataProvider(name = "positiveEditors", parallel = true)
-  public Object[][] positiveEditors() {
-    return Stream.of(Editor.SUPERVISOR, Editor.ADMIN)
-        .map(e -> new Object[] {e})
+  @DataProvider
+  public Object[][] positiveMatrix() {
+    return Stream.of(
+            new Object[] {Editor.SUPERVISOR, Role.ADMIN},
+            new Object[] {Editor.SUPERVISOR, Role.USER},
+            new Object[] {Editor.ADMIN, Role.USER})
         .toArray(Object[][]::new);
   }
 
-  @Story("Positive flow")
-  @Description("Editor creates a valid USER successfully (200 OK)")
+  @Description("Supervisor/Admin can create USER; Supervisor can also create ADMIN (200 OK)")
   @Test(
-      dataProvider = "positiveEditors",
+      dataProvider = "positiveMatrix",
       groups = {Groups.FUNCTIONAL})
-  public void editorCanCreateUser(Editor editor) {
+  public void editorCreatesPlayer_positive(Editor editor, Role targetRole) {
     var client = new PlayerClient(new ApiClient());
-    var login = RunIds.login("user");
+
+    var login = RunIds.login(targetRole.value());
     var screen = RunIds.screen("scr");
 
-    var response =
+    Response response =
         client.createRaw(
-            editor.value(), login, screen, Role.USER.value(), 24, Gender.MALE, Password.VALID);
+            editor.value(), login, screen, targetRole.value(), 24, Gender.MALE, Password.VALID);
 
     assertEquals(response.statusCode(), OK, "Unexpected status code");
 
     var created = response.as(PlayerCreateResponseDto.class);
-
     assertNotNull(created, "Response body should not be null");
     assertTrue(created.id() > 0L, "Player ID should be positive");
     assertEquals(created.login(), login);
     assertEquals(created.screenName(), screen);
-    assertEquals(created.role(), Role.USER.value());
+    assertEquals(created.role(), targetRole.value());
 
     var contentType = response.getHeader(HttpHeader.CONTENT_TYPE);
     assertTrue(
-        contentType != null && contentType.toLowerCase().startsWith("application/json"),
+        contentType != null && contentType.toLowerCase().startsWith(MediaType.APPLICATION_JSON),
         "Content-Type should be application/json");
 
     ResourceTracker.registerPlayer(created.id());

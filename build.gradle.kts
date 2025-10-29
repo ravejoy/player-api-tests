@@ -29,6 +29,7 @@ dependencies {
   testImplementation("ch.qos.logback:logback-classic:1.4.14")
   testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
   testImplementation("org.mockito:mockito-core:5.12.0")
+  testImplementation("com.fasterxml.jackson.core:jackson-databind:2.17.2")
   testImplementation(testFixtures(project(":")))
 
   testFixturesImplementation("io.rest-assured:rest-assured:5.5.0")

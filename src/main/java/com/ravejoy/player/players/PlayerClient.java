@@ -2,6 +2,7 @@ package com.ravejoy.player.players;
 
 import com.ravejoy.player.http.ApiClient;
 import com.ravejoy.player.players.dto.PlayerCreateResponseDto;
+import com.ravejoy.player.players.dto.PlayerDeleteRequestDto;
 import com.ravejoy.player.players.dto.PlayerGetAllResponseDto;
 import com.ravejoy.player.players.dto.PlayerGetByPlayerIdRequestDto;
 import com.ravejoy.player.players.dto.PlayerGetByPlayerIdResponseDto;
@@ -57,7 +58,7 @@ public final class PlayerClient {
   }
 
   public void delete(String editor, long playerId) {
-    api.withQuery(Map.of("playerId", playerId)).delete(PlayerEndpoints.DELETE + editor);
+    api.delete(PlayerEndpoints.DELETE + editor, new PlayerDeleteRequestDto(playerId));
   }
 
   public PlayerGetByPlayerIdResponseDto getById(long id) {
@@ -73,4 +74,5 @@ public final class PlayerClient {
     return api.patch(PlayerEndpoints.UPDATE + editor + "/" + id, dto)
         .as(PlayerUpdateResponseDto.class);
   }
+
 }
