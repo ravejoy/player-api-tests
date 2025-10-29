@@ -3,6 +3,7 @@ package com.ravejoy.player.assertions;
 import static org.testng.Assert.assertNotNull;
 
 import com.ravejoy.player.players.dto.PlayerCreateResponseDto;
+import com.ravejoy.player.players.dto.PlayerGetByPlayerIdResponseDto;
 import com.ravejoy.player.testsupport.Role;
 import org.testng.asserts.SoftAssert;
 
@@ -16,10 +17,37 @@ public final class PlayerAsserts {
       String expectedScreen,
       Role expectedRole) {
 
-    assertNotNull(dto, "Response body should not be null");
-    sa.assertTrue(dto.id() > 0L, "Player ID should be positive");
-    sa.assertEquals(dto.login(), expectedLogin, "Login mismatch");
-    sa.assertEquals(dto.screenName(), expectedScreen, "Screen name mismatch");
-    sa.assertEquals(dto.role(), expectedRole.value(), "Role mismatch");
+    assertNotNull(dto, "Response body must not be null");
+    sa.assertTrue(dto.id() > 0L, "id must be > 0");
+    sa.assertEquals(dto.login(), expectedLogin, "login");
+    sa.assertEquals(dto.screenName(), expectedScreen, "screenName");
+    sa.assertEquals(dto.role(), expectedRole.value(), "role");
+  }
+
+  public static void assertFetchedMatches(
+      SoftAssert sa,
+      PlayerGetByPlayerIdResponseDto dto,
+      String expectedLogin,
+      String expectedScreen,
+      Role expectedRole) {
+
+    assertNotNull(dto, "Fetched body must not be null");
+    sa.assertTrue(dto.id() > 0L, "id must be > 0");
+    sa.assertEquals(dto.login(), expectedLogin, "login");
+    sa.assertEquals(dto.screenName(), expectedScreen, "screenName");
+    sa.assertEquals(dto.role(), expectedRole.value(), "role");
+  }
+
+  public static void assertSameEntity(
+      SoftAssert sa,
+      PlayerCreateResponseDto created,
+      PlayerGetByPlayerIdResponseDto fetched) {
+
+    assertNotNull(created, "created");
+    assertNotNull(fetched, "fetched");
+    sa.assertEquals(fetched.id(), created.id(), "id");
+    sa.assertEquals(fetched.login(), created.login(), "login");
+    sa.assertEquals(fetched.screenName(), created.screenName(), "screenName");
+    sa.assertEquals(fetched.role(), created.role(), "role");
   }
 }
