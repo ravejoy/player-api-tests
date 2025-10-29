@@ -37,41 +37,56 @@ dependencies {
 }
 
 tasks.test {
-    useTestNG {
-        suites("src/test/resources/testng.xml")
+  useTestNG {
+    // allow override: .\gradlew "-Dsuite=src/test/resources/testng-known-issues.xml" test
+    val suiteProp = System.getProperty("suite") ?: "src/test/resources/testng.xml"
+    suites(suiteProp)
 
-        fun firstNonBlank(vararg keys: String): String? =
-            keys.asSequence()
-                .mapNotNull { System.getProperty(it) }
-                .map { it.trim() }
-                .firstOrNull { it.isNotEmpty() }
+    fun firstNonBlank(vararg keys: String): String? =
+      keys.asSequence()
+        .mapNotNull { System.getProperty(it) }
+        .map { it.trim() }
+        .firstOrNull { it.isNotEmpty() }
 
-        firstNonBlank("testng.groups", "groups")
-            ?.split(',')
-            ?.map { it.trim() }
-            ?.filter { it.isNotEmpty() }
-            ?.toTypedArray()
-            ?.let { includeGroups(*it) }
+    // run: -Dgroups=functional
+    firstNonBlank("testng.groups", "groups")
+      ?.split(',')
+      ?.map { it.trim() }
+      ?.filter { it.isNotEmpty() }
+      ?.toTypedArray()
+      ?.let { includeGroups(*it) }
 
-        firstNonBlank("testng.excludeGroups", "excludeGroups")
-            ?.split(',')
-            ?.map { it.trim() }
-            ?.filter { it.isNotEmpty() }
-            ?.toTypedArray()
-            ?.let { excludeGroups(*it) }
-    }
+    // run: -DexcludeGroups=known-issues
+    firstNonBlank("testng.excludeGroups", "excludeGroups")
+      ?.split(',')
+      ?.map { it.trim() }
+      ?.filter { it.isNotEmpty() }
+      ?.toTypedArray()
+      ?.let { excludeGroups(*it) }
+  }
 
-    testLogging {
-        events = setOf(
-            org.gradle.api.tasks.testing.logging.TestLogEvent.PASSED,
-            org.gradle.api.tasks.testing.logging.TestLogEvent.FAILED,
-            org.gradle.api.tasks.testing.logging.TestLogEvent.SKIPPED
-        )
-        showStandardStreams = true
-        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
-    }
+  testLogging {
+    events = setOf(TestLogEvent.PASSED, TestLogEvent.FAILED, TestLogEvent.SKIPPED)
+    showStandardStreams = true
+    exceptionFormat = TestExceptionFormat.FULL
+  }
 }
 
+// Dedicated task to run only known issues group (ignores suite files)
+tasks.register<Test>("knownIssues") {
+  description = "Run only tests marked as 'known-issues' group"
+  group = "verification"
+
+  useTestNG {
+    includeGroups("known-issues")
+  }
+
+  testLogging {
+    events = setOf(TestLogEvent.PASSED, TestLogEvent.FAILED, TestLogEvent.SKIPPED)
+    showStandardStreams = true
+    exceptionFormat = TestExceptionFormat.FULL
+  }
+}
 
 jacoco {
   toolVersion = "0.8.12"
