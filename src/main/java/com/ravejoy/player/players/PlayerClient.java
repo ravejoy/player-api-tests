@@ -7,6 +7,7 @@ import com.ravejoy.player.players.dto.PlayerGetByPlayerIdRequestDto;
 import com.ravejoy.player.players.dto.PlayerGetByPlayerIdResponseDto;
 import com.ravejoy.player.players.dto.PlayerUpdateRequestDto;
 import com.ravejoy.player.players.dto.PlayerUpdateResponseDto;
+import io.restassured.response.Response;
 import java.util.Map;
 
 public final class PlayerClient {
@@ -34,6 +35,25 @@ public final class PlayerClient {
             "gender", gender,
             "password", password);
     return api.get(PlayerEndpoints.CREATE + editor, q).as(PlayerCreateResponseDto.class);
+  }
+
+  public Response createRaw(
+      String editor,
+      String login,
+      String screenName,
+      String role,
+      int age,
+      String gender,
+      String password) {
+    Map<String, Object> q =
+        Map.of(
+            "login", login,
+            "screenName", screenName,
+            "role", role,
+            "age", age,
+            "gender", gender,
+            "password", password);
+    return api.get(PlayerEndpoints.CREATE + editor, q);
   }
 
   public void delete(String editor, long playerId) {
