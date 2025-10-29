@@ -13,11 +13,10 @@
     </packages>
   </test>
 
-  <test name="functional">
+   <test name="functional">
     <groups>
       <run>
-        <include name="functional"/>
-        <include name="rbac"/>
+        <exclude name="known-issues"/>
       </run>
     </groups>
     <packages>

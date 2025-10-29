@@ -1,5 +1,6 @@
 package com.ravejoy.player.infra.support;
 
+import com.ravejoy.player.testsupport.Groups;
 import com.ravejoy.player.testsupport.ResourceTracker;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -9,7 +10,7 @@ import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
-@Test(groups = {"infra"})
+@Test(groups = {Groups.INFRA})
 public class ResourceTrackerTest {
 
   @AfterMethod

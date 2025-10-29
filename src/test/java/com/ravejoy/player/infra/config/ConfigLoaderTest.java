@@ -1,6 +1,7 @@
 package com.ravejoy.player.infra.config;
 
 import com.ravejoy.player.config.ConfigLoader;
+import com.ravejoy.player.testsupport.Groups;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -8,7 +9,7 @@ import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
-@Test(groups = "infra")
+@Test(groups = Groups.INFRA)
 public class ConfigLoaderTest {
 
   @AfterMethod

@@ -6,6 +6,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import com.ravejoy.player.http.StatusCode;
 import com.ravejoy.player.http.filters.SafeHttpLoggingFilter;
+import com.ravejoy.player.testsupport.Groups;
 import io.restassured.RestAssured;
 import java.io.IOException;
 import java.util.stream.Collectors;
@@ -17,7 +18,7 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-@Test(groups = {"infra"})
+@Test(groups = {Groups.INFRA})
 public class SafeHttpLoggingFilterTest {
 
   private MockWebServer server;
