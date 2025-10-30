@@ -1,4 +1,4 @@
-package com.ravejoy.player.functional.create;
+package com.ravejoy.player.functional.createEndpoint;
 
 import static com.ravejoy.player.http.StatusCode.BAD_REQUEST;
 import static com.ravejoy.player.http.StatusCode.OK;
@@ -8,11 +8,13 @@ import static org.testng.Assert.assertTrue;
 import com.ravejoy.player.assertions.ContractAsserts;
 import com.ravejoy.player.assertions.PlayerAsserts;
 import com.ravejoy.player.assertions.ResponseAsserts;
+import com.ravejoy.player.data.model.PlayerCreateData;
 import com.ravejoy.player.players.dto.PlayerCreateResponseDto;
 import com.ravejoy.player.steps.PlayerSteps;
 import com.ravejoy.player.testsupport.Editor;
 import com.ravejoy.player.testsupport.Gender;
 import com.ravejoy.player.testsupport.Groups;
+import com.ravejoy.player.testsupport.Password;
 import com.ravejoy.player.testsupport.Role;
 import com.ravejoy.player.testsupport.RunIds;
 import io.qameta.allure.Description;
@@ -36,8 +38,10 @@ public class CreatePlayerContractTests {
     var steps = new PlayerSteps();
     final String login = RunIds.login(Role.USER.value());
     final String screen = RunIds.screen("scr");
+    var data =
+        new PlayerCreateData(login, screen, Role.USER.value(), 24, Gender.MALE, Password.VALID);
 
-    Response resp = steps.createAsSupervisor(login, screen, Role.USER);
+    Response resp = steps.createAs(Editor.SUPERVISOR, data);
 
     ResponseAsserts.assertOkJson(resp);
 
@@ -54,8 +58,10 @@ public class CreatePlayerContractTests {
     var steps = new PlayerSteps();
     final String login = RunIds.login(Role.USER.value());
     final String screen = RunIds.screen("scr");
+    var data =
+        new PlayerCreateData(login, screen, Role.USER.value(), 24, Gender.MALE, Password.VALID);
 
-    Response resp = steps.createAsSupervisor(login, screen, Role.USER);
+    Response resp = steps.createAs(Editor.SUPERVISOR, data);
     ResponseAsserts.assertStatus(resp, OK);
     ResponseAsserts.assertJsonOrEmpty(resp);
 
@@ -76,10 +82,9 @@ public class CreatePlayerContractTests {
     var steps = new PlayerSteps();
     final String login = RunIds.login(Role.USER.value());
     final String screen = RunIds.screen("scr");
+    var data = new PlayerCreateData(login, screen, Role.USER.value(), 24, Gender.MALE, "");
 
-    Response resp =
-        steps.createRaw(
-            Editor.SUPERVISOR.value(), login, screen, Role.USER.value(), 24, Gender.MALE, "");
+    Response resp = steps.createAs(Editor.SUPERVISOR, data);
 
     ResponseAsserts.assertStatus(resp, BAD_REQUEST);
     ResponseAsserts.assertJsonOrEmpty(resp);

@@ -1,12 +1,22 @@
-package com.ravejoy.player.functional;
+package com.ravejoy.player.functional.createEndpoint;
 
 import com.ravejoy.player.assertions.PlayerAsserts;
 import com.ravejoy.player.assertions.ResponseAsserts;
+import com.ravejoy.player.data.model.PlayerCreateData;
 import com.ravejoy.player.players.dto.PlayerCreateResponseDto;
 import com.ravejoy.player.steps.PlayerSteps;
-import com.ravejoy.player.testsupport.*;
+import com.ravejoy.player.testsupport.Editor;
+import com.ravejoy.player.testsupport.Gender;
+import com.ravejoy.player.testsupport.Groups;
+import com.ravejoy.player.testsupport.Password;
+import com.ravejoy.player.testsupport.Role;
+import com.ravejoy.player.testsupport.RunIds;
 import com.ravejoy.player.testsupport.helper.PlayerLookup;
-import io.qameta.allure.*;
+import io.qameta.allure.Description;
+import io.qameta.allure.Epic;
+import io.qameta.allure.Feature;
+import io.qameta.allure.Issue;
+import io.qameta.allure.Story;
 import io.restassured.response.Response;
 import java.util.stream.Stream;
 import org.testng.annotations.DataProvider;
@@ -31,8 +41,10 @@ public class CreatePlayerTests {
     var steps = new PlayerSteps();
     final String login = RunIds.login(targetRole.value());
     final String screen = RunIds.screen("scr");
+    var data =
+        new PlayerCreateData(login, screen, targetRole.value(), 24, Gender.MALE, Password.VALID);
 
-    Response createResp = steps.createAsSupervisor(login, screen, targetRole);
+    Response createResp = steps.createAs(Editor.SUPERVISOR, data);
     ResponseAsserts.assertOkJson(createResp);
 
     var sa = new SoftAssert();
@@ -55,8 +67,10 @@ public class CreatePlayerTests {
     var steps = new PlayerSteps();
     final String login = RunIds.login(Role.USER.value());
     final String screen = RunIds.screen("scr");
+    var data =
+        new PlayerCreateData(login, screen, Role.USER.value(), 24, Gender.MALE, Password.VALID);
 
-    var resp = steps.createAsAdmin(login, screen, Role.USER);
+    var resp = steps.createAs(Editor.ADMIN, data);
 
     ResponseAsserts.assertStatus(resp, com.ravejoy.player.http.StatusCode.OK);
     ResponseAsserts.assertJsonOrEmpty(resp);

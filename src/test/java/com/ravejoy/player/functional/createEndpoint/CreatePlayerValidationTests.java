@@ -1,12 +1,21 @@
-package com.ravejoy.player.functional.create;
+package com.ravejoy.player.functional.createEndpoint;
 
 import static com.ravejoy.player.http.StatusCode.BAD_REQUEST;
 
 import com.ravejoy.player.assertions.ResponseAsserts;
 import com.ravejoy.player.data.model.PlayerCreateData;
 import com.ravejoy.player.steps.PlayerSteps;
-import com.ravejoy.player.testsupport.*;
-import io.qameta.allure.*;
+import com.ravejoy.player.testsupport.Editor;
+import com.ravejoy.player.testsupport.Gender;
+import com.ravejoy.player.testsupport.Groups;
+import com.ravejoy.player.testsupport.Password;
+import com.ravejoy.player.testsupport.Role;
+import com.ravejoy.player.testsupport.RunIds;
+import io.qameta.allure.Description;
+import io.qameta.allure.Epic;
+import io.qameta.allure.Feature;
+import io.qameta.allure.Issue;
+import io.qameta.allure.Story;
 import io.restassured.response.Response;
 import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
@@ -29,14 +38,7 @@ public class CreatePlayerValidationTests {
   }
 
   private Response call(PlayerSteps steps, PlayerCreateData d) {
-    return steps.createRaw(
-        Editor.SUPERVISOR.value(),
-        d.login(),
-        d.screenName(),
-        d.role(),
-        d.age(),
-        d.gender(),
-        d.password());
+    return steps.createAs(Editor.SUPERVISOR, d);
   }
 
   @DataProvider(name = "invalidCreatePassing", parallel = true)
