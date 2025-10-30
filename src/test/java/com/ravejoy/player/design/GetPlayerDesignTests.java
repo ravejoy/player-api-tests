@@ -68,9 +68,7 @@ public class GetPlayerDesignTests {
     var api = new com.ravejoy.player.http.ApiClient();
     Response wrongMethod = api.get(PlayerEndpoints.GET, Map.of("playerId", id));
     sa.assertNotEquals(
-        wrongMethod.statusCode(),
-        OK,
-        "Design: GET /player/get?playerId=... should not be 200 OK");
+        wrongMethod.statusCode(), OK, "Design: GET /player/get?playerId=... should not be 200 OK");
 
     sa.assertAll();
   }
