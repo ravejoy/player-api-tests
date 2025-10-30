@@ -1,6 +1,6 @@
 package com.ravejoy.player.steps;
 
-import com.ravejoy.player.http.ApiClient;
+import com.ravejoy.player.data.model.PlayerCreateData;
 import com.ravejoy.player.players.PlayerClient;
 import com.ravejoy.player.players.dto.*;
 import com.ravejoy.player.testsupport.*;
@@ -8,7 +8,17 @@ import io.restassured.response.Response;
 
 public final class PlayerSteps {
 
-  private final PlayerClient client = new PlayerClient(new ApiClient());
+  private final StepsSupport support;
+  private final PlayerClient client;
+
+  public PlayerSteps() {
+    this(new StepsSupport());
+  }
+
+  public PlayerSteps(StepsSupport support) {
+    this.support = support;
+    this.client = support.players();
+  }
 
   public Response createRaw(
       String editor,
@@ -19,11 +29,7 @@ public final class PlayerSteps {
       String gender,
       String password) {
     Response r = client.createRaw(editor, login, screen, role, age, gender, password);
-    try {
-      long id = r.jsonPath().getLong("id");
-      if (id > 0) ResourceTracker.registerPlayer(id);
-    } catch (Exception ignored) {
-    }
+    support.registerIdFrom(r);
     return r;
   }
 
@@ -45,8 +51,6 @@ public final class PlayerSteps {
     String screen = RunIds.screen(role.value());
     return create(editor.value(), login, screen, role.value(), age, Gender.MALE, Password.VALID);
   }
-
-  // -------- SHORTCUTS (no-args for login/screen) --------
 
   public Response createAs(Editor editor, Role role) {
     return createRaw(
@@ -71,8 +75,6 @@ public final class PlayerSteps {
     return createAs(Editor.USER, role);
   }
 
-  // -------- SHORTCUTS (explicit login/screen) --------
-
   public Response createAs(Editor editor, String login, String screen, Role role) {
     return createRaw(editor.value(), login, screen, role.value(), 24, Gender.MALE, Password.VALID);
   }
@@ -89,8 +91,6 @@ public final class PlayerSteps {
     return createAs(Editor.USER, login, screen, role);
   }
 
-  // -------- SHORTCUTS (targetRole as String for RBAC matrices) --------
-
   public Response createAs(Editor editor, String targetRole) {
     return createRaw(
         editor.value(),
@@ -102,7 +102,21 @@ public final class PlayerSteps {
         Password.VALID);
   }
 
-  // ---------- READ ----------
+  public Response createAs(Editor editor, PlayerCreateData d) {
+    Response r =
+        client.createRaw(
+            editor.value(), d.login(), d.screenName(), d.role(), d.age(), d.gender(), d.password());
+    support.registerIdFrom(r);
+    return r;
+  }
+
+  public PlayerCreateResponseDto create(Editor editor, PlayerCreateData d) {
+    PlayerCreateResponseDto dto =
+        client.create(
+            editor.value(), d.login(), d.screenName(), d.role(), d.age(), d.gender(), d.password());
+    if (dto != null && dto.id() > 0) ResourceTracker.registerPlayer(dto.id());
+    return dto;
+  }
 
   public PlayerGetByPlayerIdResponseDto getById(long id) {
     return client.getById(id);
@@ -112,8 +126,6 @@ public final class PlayerSteps {
     return client.getAll();
   }
 
-  // ---------- UPDATE ----------
-
   public PlayerUpdateResponseDto update(String editor, long id, PlayerUpdateRequestDto dto) {
     return client.update(editor, id, dto);
   }
@@ -121,8 +133,6 @@ public final class PlayerSteps {
   public PlayerUpdateResponseDto update(Editor editor, long id, PlayerUpdateRequestDto dto) {
     return update(editor.value(), id, dto);
   }
-
-  // ---------- DELETE ----------
 
   public void delete(String editor, long id) {
     client.delete(editor, id);
