@@ -89,6 +89,25 @@ tasks.register<Test>("knownIssues") {
   }
 }
 
+tasks.register("allureServe") {
+    dependsOn("test")
+    doLast {
+        exec {
+            commandLine("allure", "serve", "build/allure-results")
+        }
+    }
+}
+
+tasks.register("allureReport") {
+    dependsOn("test")
+    doLast {
+        exec {
+            commandLine("allure", "generate", "build/allure-results", "-o", "build/allure-report", "--clean")
+        }
+    }
+}
+
+
 jacoco {
   toolVersion = "0.8.12"
 }
