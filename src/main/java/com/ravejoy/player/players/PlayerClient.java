@@ -80,6 +80,7 @@ public final class PlayerClient {
   }
 
   public Response deleteRaw(String editor, long playerId) {
-  return api.deleteWithBody(PlayerEndpoints.DELETE + editor, new PlayerDeleteRequestDto(playerId));
-}
+    return api.deleteWithBody(
+        PlayerEndpoints.DELETE + editor, new PlayerDeleteRequestDto(playerId));
+  }
 }

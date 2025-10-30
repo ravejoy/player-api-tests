@@ -27,14 +27,12 @@ public final class DeleteAssertions {
   }
 
   public static void assertDeletedOkOr204Empty(Response resp) {
-  ResponseAsserts.assertOkOrNoContentJsonOrEmpty(resp);
+    ResponseAsserts.assertOkOrNoContentJsonOrEmpty(resp);
 
-  if (resp.statusCode() == com.ravejoy.player.http.StatusCode.NO_CONTENT) {
-    ResponseAsserts.assertEmptyBody(resp);
-  } else {
-    assertTrue(Jsons.isEmptyBody(resp), "Expected empty body for DELETE 200");
+    if (resp.statusCode() == com.ravejoy.player.http.StatusCode.NO_CONTENT) {
+      ResponseAsserts.assertEmptyBody(resp);
+    } else {
+      assertTrue(Jsons.isEmptyBody(resp), "Expected empty body for DELETE 200");
+    }
   }
 }
-
-}
-

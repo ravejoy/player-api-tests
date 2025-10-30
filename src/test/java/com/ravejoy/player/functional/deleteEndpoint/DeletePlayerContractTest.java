@@ -28,7 +28,9 @@ public class DeletePlayerContractTest {
   }
 
   @Description("Invalid playerId (0, -1) should return 400 Bad Request")
-  @Test(dataProvider = "badIds", groups = {Groups.KNOWN_ISSUES, Groups.CONTRACT})
+  @Test(
+      dataProvider = "badIds",
+      groups = {Groups.KNOWN_ISSUES, Groups.CONTRACT})
   public void deleteBadRequest(long badId) {
     var flow = new DeleteFlow(new PlayerSteps());
     Response r = flow.deleteAs(Editor.SUPERVISOR, badId);

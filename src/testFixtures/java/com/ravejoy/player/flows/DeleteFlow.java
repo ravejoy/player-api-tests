@@ -19,7 +19,8 @@ public final class DeleteFlow {
   public PlayerCreateResponseDto createUserForDeletion(Role role) {
     String login = RunIds.login(role.value());
     String screen = RunIds.screen(role.value());
-    return steps.create(Editor.SUPERVISOR.value(), login, screen, role.value(), 24, Gender.MALE, Password.VALID);
+    return steps.create(
+        Editor.SUPERVISOR.value(), login, screen, role.value(), 24, Gender.MALE, Password.VALID);
   }
 
   public Response deleteAs(Editor editor, long id) {
@@ -32,6 +33,8 @@ public final class DeleteFlow {
 
   public boolean existsInListById(long id) {
     var all = steps.getAll();
-    return all != null && all.players() != null && all.players().stream().anyMatch(p -> p.id() == id);
+    return all != null
+        && all.players() != null
+        && all.players().stream().anyMatch(p -> p.id() == id);
   }
 }

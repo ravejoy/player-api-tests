@@ -1,3 +1,4 @@
+// src/testFixtures/java/com/ravejoy/player/testsupport/helper/Jsons.java
 package com.ravejoy.player.testsupport.helper;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -18,9 +19,13 @@ public final class Jsons {
     }
   }
 
-  public static boolean isEmptyBody(Response resp) {
-  var body = resp.getBody().asString();
-  return body == null || body.isBlank() || body.equals("{}") || body.equals("[]");
-}
+  public static <T> T toDtoOrNull(Response resp, Class<T> type) {
+    if (isEmptyBody(resp)) return null;
+    return toDto(resp, type);
+  }
 
+  public static boolean isEmptyBody(Response resp) {
+    var body = resp.getBody().asString();
+    return body == null || body.isBlank() || body.equals("{}") || body.equals("[]");
+  }
 }

@@ -3,7 +3,6 @@ package com.ravejoy.player.functional.deleteEndpoint;
 import static com.ravejoy.player.assertions.DeleteAssertions.assertDeletedOkOr204Empty;
 import static com.ravejoy.player.assertions.DeleteAssertions.assertGetByIdReturnsEmptyBody200;
 
-import com.ravejoy.player.dataproviders.DeleteDataProviders;
 import com.ravejoy.player.flows.DeleteFlow;
 import com.ravejoy.player.steps.PlayerSteps;
 import com.ravejoy.player.testsupport.Editor;
@@ -22,8 +21,15 @@ import org.testng.annotations.Test;
 @Story("Happy path")
 public class DeletePlayerHappyPathTest {
 
+  @org.testng.annotations.DataProvider(name = "rolesToCreate", parallel = true)
+  public Object[][] rolesToCreate_local() {
+    return new Object[][] {{Role.USER}};
+  }
+
   @Description("Supervisor deletes a USER; entity becomes non-fetchable and disappears from list")
-  @Test(dataProvider = "rolesToCreate", dataProviderClass = DeleteDataProviders.class, groups = {Groups.FUNCTIONAL})
+  @Test(
+      dataProvider = "rolesToCreate",
+      groups = {Groups.FUNCTIONAL})
   public void supervisorDeletesUser(Role role) {
     var flow = new DeleteFlow(new PlayerSteps());
     var created = flow.createUserForDeletion(role);

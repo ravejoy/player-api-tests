@@ -122,6 +122,11 @@ public final class PlayerSteps {
     return client.getById(id);
   }
 
+  /*public PlayerGetByPlayerIdResponseDto getById(long id) {
+    var resp = client.getByIdRaw(id);
+    return Jsons.toDtoOrNull(resp, PlayerGetByPlayerIdResponseDto.class);
+  }*/
+
   public PlayerGetAllResponseDto getAll() {
     return client.getAll();
   }
@@ -146,7 +151,7 @@ public final class PlayerSteps {
     return client.getByIdRaw(id);
   }
 
-public Response deleteAndReturn(Editor editor, long id) {
-  return client.deleteRaw(editor.value(), id);
-}
+  public Response deleteAndReturn(Editor editor, long id) {
+    return client.deleteRaw(editor.value(), id);
+  }
 }
