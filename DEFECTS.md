@@ -12,6 +12,7 @@
 | API-02  | Wrong codes for invalid/not-found playerId | API Contract Defect   | Open   |
 | DES-02  | `/player/get` uses POST instead of GET     | Design Defect         | Open   |
 | DES-03  | Missing cache headers for GET resource     | Design Defect         | Open   |
+| VAL-03  | Duplicate login overwrites existing user   | Data Integrity Defect | Open   |
 
 ---
 
@@ -155,3 +156,33 @@ No `Cache-Control` header on successful fetch.
 `GetPlayerDesignTests.getByIdDesignSemantics`
 
 ---
+
+### VAL-03 Duplicate login overwrites existing user (data loss)
+
+**Type:** Data Integrity / Validation Defect
+**Severity:** Critical
+**Status:** Open
+
+**Summary:**
+`/player/create/{editor}` accepts a duplicate `login` and **overwrites** the existing user instead of rejecting the request.
+
+**Expected:**
+
+- Reject duplicate login
+- Status: `400 Bad Request` or `409 Conflict`
+- Existing user remains unchanged
+
+**Observed:**
+
+- Second request with same login succeeds
+- Existing user is silently overwritten
+- Data loss occurs
+
+**Impact:**
+
+- Violates uniqueness rule
+- Causes account takeover / identity corruption
+- Breaks business logic and security model
+
+**Test:**
+`CreatePlayerValidationTests.duplicateLoginShouldBeRejected`
