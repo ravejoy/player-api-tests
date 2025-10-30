@@ -15,6 +15,8 @@
 | VAL-03  | Duplicate login overwrites existing user      | Data Integrity Defect | Open   |
 | RBAC-02 | User can delete players (should be forbidden) | Business Logic Defect | Open   |
 | API-03  | Duplicate login overwrites existing user      | Data Integrity Defect | Open   |
+| RBAC-03 | Admin cannot update USER                      | Business Logic Defect | Open   |
+| VAL-04  | Update accepts invalid ages                   | Validation Defect     | Open   |
 
 ---
 
@@ -241,3 +243,106 @@ Enforce RBAC check for delete: deny when `editor=user` (regardless of target rol
 
 - DeletePlayerContractTests.deleteBadRequest
 - DeletePlayerContractTests.deleteUnknownId
+
+---
+
+### RBAC-03 Admin cannot update USER (403 instead of 200)
+
+**Type:** Business Logic Defect  
+**Severity:** Critical  
+**Status:** Open
+
+**Summary:**  
+Admin should be able to update users with role `user`, but API incorrectly returns `403 Forbidden`.
+
+**Expected behavior:**  
+Per role model rules, `admin` can manage users with roles:
+
+- `user`
+- `admin` (if it's himself)
+
+Updating a `user` should return `200 OK` (or `204 No Content`).
+
+**Actual behavior:**  
+Calling `PATCH /player/update/admin/{id}` to update a regular user returns:
+
+- `403 Forbidden`
+
+**Impact:**
+
+- Admin cannot modify subordinate users
+- Violates documented role hierarchy
+- Blocks normal admin operations and UI flows
+
+**Reproduction:**
+
+1. Create a USER as supervisor
+2. Attempt to update them as admin
+
+Example request:
+
+```
+
+PATCH /player/update/admin/{userId}
+Content-Type: application/json
+
+{
+"login": "upd_xxx",
+"screenName": "upd_xxx",
+"age": 25,
+"gender": "male",
+"password": "qwerty12"
+}
+
+```
+
+**Expected:** `200 OK`  
+**Actual:** `403 Forbidden`
+
+**Test reference:**  
+`UpdatePlayerRbacTest.adminShouldUpdateUser_butForbidden`
+
+**Group:** `known-issues`
+
+**Recommendation:**  
+Fix RBAC logic to allow admin → user updates.
+
+---
+
+---
+
+### VAL-04 Update accepts invalid ages (returns 200 instead of 400)
+
+**Type:** Validation Defect  
+**Severity:** High  
+**Status:** Open
+
+**Summary:**  
+`PATCH /player/update/{editor}/{id}` does not validate `age` boundaries. Requests with age values such as 15, 60, 0, or negative numbers are accepted and return 200 OK.
+
+**Expected behavior:**  
+Per baseline rules (16–59 inclusive), invalid ages must be rejected with `400 Bad Request`.
+
+**Observed behavior:**  
+Requests with invalid ages return `200 OK` and apply changes.
+
+**Impact:**
+
+- Violates age business rules established for create/update
+- Leads to inconsistent user data
+
+**Reproduction:**
+
+1. Create a USER
+2. `PATCH /player/update/supervisor/{id}` with body `{ "age": 15 }` (or 60, 0, -1)
+
+**Expected:** 400 Bad Request  
+**Actual:** 200 OK
+
+**Test reference:**  
+`UpdatePlayerValidationTest.invalidAgesAreRejected`
+
+**Group:** `known-issues`
+
+**Recommendation:**  
+Add server-side validation for `age` range (e.g., 16 ≤ age ≤ 59) consistent with create.
