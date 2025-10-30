@@ -38,6 +38,22 @@ public final class PlayerLookup {
         .anyMatch(screenName::equals);
   }
 
+  public static boolean existsById(long id) {
+    return items().stream().anyMatch(p -> p.id() == id);
+  }
+
+  public static long maxId() {
+    return items().stream().mapToLong(PlayerItem::id).max().orElse(0L);
+  }
+
+  public static long nonExistingId() {
+    return maxId() + 1_000_000L;
+  }
+
+  public static long anyExistingIdOrZero() {
+    return items().stream().findFirst().map(PlayerItem::id).orElse(0L);
+  }
+
   public static PlayerGetByPlayerIdResponseDto getById(long id) {
     var client = new PlayerClient(new ApiClient());
     return client.getById(id);

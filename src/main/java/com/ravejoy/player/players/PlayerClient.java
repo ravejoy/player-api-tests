@@ -74,4 +74,8 @@ public final class PlayerClient {
     return api.patch(PlayerEndpoints.UPDATE + editor + "/" + id, dto)
         .as(PlayerUpdateResponseDto.class);
   }
+
+  public Response getByIdRaw(long id) {
+    return api.post(PlayerEndpoints.GET, new PlayerGetByPlayerIdRequestDto(id));
+  }
 }

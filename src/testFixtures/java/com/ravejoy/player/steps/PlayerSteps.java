@@ -141,4 +141,8 @@ public final class PlayerSteps {
   public void delete(Editor editor, long id) {
     delete(editor.value(), id);
   }
+
+  public Response getByIdRaw(long id) {
+    return client.getByIdRaw(id);
+  }
 }

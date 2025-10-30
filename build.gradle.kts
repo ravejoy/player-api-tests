@@ -34,6 +34,7 @@ dependencies {
 
   testFixturesImplementation("io.rest-assured:rest-assured:5.5.0")
   testFixturesImplementation("org.testng:testng:7.11.0")
+  testFixturesImplementation("com.fasterxml.jackson.core:jackson-databind:2.17.2")
 }
 
 tasks.test {
