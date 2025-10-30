@@ -154,4 +154,8 @@ public final class PlayerSteps {
   public Response deleteAndReturn(Editor editor, long id) {
     return client.deleteRaw(editor.value(), id);
   }
+
+  public Response updateRaw(Editor editor, long id, PlayerUpdateRequestDto dto) {
+    return client.updateRaw(editor.value(), id, dto);
+  }
 }

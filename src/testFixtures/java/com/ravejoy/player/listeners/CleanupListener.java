@@ -39,9 +39,15 @@ public final class CleanupListener implements IInvokedMethodListener, ISuiteList
 
   @Override
   public void onFinish(ISuite suite) {
-    System.out.printf(
-        "[CLEANUP][onFinish] suite=%s sweepPrefix=%s%n", suite.getName(), RunIds.prefix());
+    System.out.printf("[CLEANUP][onFinish] suite=%s%n", suite.getName());
+
+    List<Long> left = ResourceTracker.drainAllPlayers();
+    if (left.isEmpty()) {
+      System.out.println("[CLEANUP][onFinish] nothing to delete");
+      return;
+    }
     var cleaner = new PlayerCleanup(new PlayerClient(new ApiClient()));
-    cleaner.sweepByPrefix(CLEANUP_EDITOR, RunIds.prefix());
+    System.out.printf("[CLEANUP][onFinish] leftover ids=%s%n", left);
+    cleaner.deleteByIds(CLEANUP_EDITOR, left);
   }
 }

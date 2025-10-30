@@ -28,4 +28,17 @@ public final class Jsons {
     var body = resp.getBody().asString();
     return body == null || body.isBlank() || body.equals("{}") || body.equals("[]");
   }
+
+  public static <T> T from(Response resp, Class<T> cls) {
+    String body = resp.getBody() != null ? resp.getBody().asString() : null;
+    if (body == null || body.isBlank()) {
+      throw new IllegalStateException("Cannot deserialize empty body to " + cls.getSimpleName());
+    }
+    try {
+      return MAPPER.readValue(body, cls);
+    } catch (Exception e) {
+      throw new RuntimeException(
+          "Failed to deserialize response to " + cls.getSimpleName() + ": " + body, e);
+    }
+  }
 }

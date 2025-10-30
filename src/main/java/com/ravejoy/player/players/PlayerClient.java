@@ -83,4 +83,8 @@ public final class PlayerClient {
     return api.deleteWithBody(
         PlayerEndpoints.DELETE + editor, new PlayerDeleteRequestDto(playerId));
   }
+
+  public Response updateRaw(String editor, long id, PlayerUpdateRequestDto dto) {
+    return api.patch(PlayerEndpoints.UPDATE + editor + "/" + id, dto);
+  }
 }
