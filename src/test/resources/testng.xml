@@ -20,7 +20,18 @@
       </run>
     </groups>
     <packages>
-      <package name="com.ravejoy.player.functional"/>
+      <package name="com.ravejoy.player.functional.*"/>
+    </packages>
+  </test>
+
+<test name="design">
+    <groups>
+      <run>
+        <exclude name="known-issues"/>
+      </run>
+    </groups>
+    <packages>
+      <package name="com.ravejoy.player.design"/>
     </packages>
   </test>
 

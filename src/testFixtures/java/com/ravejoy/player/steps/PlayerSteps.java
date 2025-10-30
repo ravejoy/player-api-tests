@@ -143,6 +143,6 @@ public final class PlayerSteps {
   }
 
   public Response getByIdRaw(long id) {
-  return client.getByIdRaw(id);
-}
+    return client.getByIdRaw(id);
+  }
 }

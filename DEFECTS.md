@@ -1,7 +1,17 @@
-Got it. Here’s an updated **DEFECTS.md** block (English only), adding **VAL-02** and aligning test references with the current class/method names and package structure.
-
-````md
 # DEFECT LOG
+
+## Index
+
+| ID      | Title                                      | Type                  | Status |
+| ------- | ------------------------------------------ | --------------------- | ------ |
+| RBAC-01 | Admin cannot create USER                   | Business Logic Defect | Open   |
+| API-01  | Null fields in create response             | API Contract Defect   | Open   |
+| VAL-01  | Password not validated                     | Validation Defect     | Open   |
+| VAL-02  | Invalid gender accepted                    | Validation Defect     | Open   |
+| DES-01  | GET creates resource (REST violation)      | Design Defect         | Open   |
+| API-02  | Wrong codes for invalid/not-found playerId | API Contract Defect   | Open   |
+| DES-02  | `/player/get` uses POST instead of GET     | Design Defect         | Open   |
+| DES-03  | Missing cache headers for GET resource     | Design Defect         | Open   |
 
 ---
 
@@ -11,37 +21,12 @@ Got it. Here’s an updated **DEFECTS.md** block (English only), adding **VAL-02
 **Severity:** Critical  
 **Status:** Open
 
-**Summary:**  
-Admin should be able to create users with role `user`. API incorrectly returns `403 Forbidden`.
+**Summary:** Admin should be able to create users with role `user`. API incorrectly returns `403 Forbidden`.
 
-**Observed behavior:**  
-When sending a valid request:
+**Expected:** 200 OK  
+**Observed:** 403 Forbidden
 
-- editor = `admin`
-- role = `user`
-
-API returns: `403 Forbidden`.
-
-**Expected behavior:**  
-Per role model — admin can create users with role `user`.  
-Should return: `200 OK` (or `201 Created` if aligned with REST).
-
-**Impact:**
-
-- Admin cannot create regular users
-- Violates documented role capabilities
-- Blocks standard onboarding flow
-
-**Reproduction:**  
-Call `GET /player/create/admin` with valid payload (`age > 16`, valid password, unique login/screenName), role = `user`.
-
-**Test reference:**  
-`CreatePlayerTests.adminCreatesUser()`
-
-**Group:** `known-issues`
-
-**Recommendation:**  
-Fix RBAC logic: allow admin → user creation.
+**Test:** `CreatePlayerTests.adminCreatesUser()`
 
 ---
 
@@ -51,158 +36,122 @@ Fix RBAC logic: allow admin → user creation.
 **Severity:** Major  
 **Status:** Open
 
-**Summary:**  
-`/player/create/{editor}` returns `null` for multiple response fields despite Swagger contract defining them as typed & non-null (`string`/`int32`).
+**Summary:** Response DTO contains `null` fields despite contract defining them as non-null.
 
-**Observed behavior:**  
-Example response body:
-
-```json
-{
-  "id": 374393496,
-  "login": "L",
-  "password": null,
-  "screenName": null,
-  "gender": null,
-  "age": null,
-  "role": null
-}
-```
-````
-
-**Expected behavior:**
-Per API schema, fields must return meaningful values:
-
-- `id` = int64
-- `login` = string
-- `screenName` = string
-- `role` = string
-- `gender` = string
-- `age` = int32
-
-**Impact:**
-
-- Client code cannot rely on API response schema
-- Breaks typed integration clients
-- Blocks contract-based validation and automation
-
-**Reproduction:**
-Call `GET /player/create/supervisor` with valid payload.
-
-**Test reference:**
-`CreatePlayerContractTests.supervisorCreatesUserContractStrict`
-
-**Group:** `known-issues`
-
-**Recommendation:**
-Populate response DTO based on created entity or input data. Avoid nulls — return typed defaults or actual created values.
+**Test:** `CreatePlayerContractTests.supervisorCreatesUserContractStrict`
 
 ---
 
 ### VAL-01 Password is required but request succeeds without one
 
-**Type:** Validation Defect
-**Severity:** High
+**Type:** Validation Defect  
+**Severity:** High  
 **Status:** Open
 
-**Summary:**
-API accepts requests without `password` despite task specification stating it is required.
+**Summary:** Missing/empty password is accepted.
 
-**Observed behavior:**
-Request with `password=""` succeeds (`200 OK`).
+**Test:**
 
-**Expected behavior:**
-Missing or empty password should return:
-
-- `400 Bad Request` (validation failure)
-  _(or `422 Unprocessable Entity` if adopting strict REST semantics)_
-
-**Impact:**
-
-- Security risk: weak account creation policy
-- Inconsistency between documentation, Swagger, and behavior
-- Allows invalid accounts to be created
-
-**Reproduction:**
-
-```
-GET /player/create/supervisor?login=X&screenName=Y&role=user&gender=male&age=24&password=
-```
-
-**Test reference:**
-`CreatePlayerContractTests.supervisorCreatesUserWithEmptyPassword`
-`CreatePlayerValidationTests.createPlayerValidationEmptyPassword`
-
-**Group:** `known-issues`
-
-**Recommendation:**
-Add server-side validation for required field `password`. Reject null/empty values.
+- `CreatePlayerContractTests.supervisorCreatesUserWithEmptyPassword`
+- `CreatePlayerValidationTests.createPlayerValidationEmptyPassword`
 
 ---
 
-### VAL-02 Gender accepts invalid values (no server-side validation)
+### VAL-02 Gender accepts invalid values (no validation)
 
-**Type:** Validation Defect
-**Severity:** Medium
+**Type:** Validation Defect  
+**Severity:** Medium  
 **Status:** Open
 
-**Summary:**
-`gender` is not validated; arbitrary values (e.g., `foo`) are accepted and the user is created.
+**Summary:** Arbitrary gender values are accepted instead of validated.
 
-**Observed behavior:**
-`gender=foo` yields `200 OK`.
-
-**Expected behavior:**
-`400 Bad Request` with a clear validation error. Allowed values should be restricted (enum/whitelist).
-
-**Impact:**
-
-- Dirty data in the system
-- Divergence between UI and API
-- Complicates analytics and downstream processing
-
-**Reproduction:**
-
-```
-GET /player/create/supervisor?login=X&screenName=Y&role=user&gender=foo&age=24&password=Z
-```
-
-**Test reference:**
-`CreatePlayerValidationTests.createPlayerValidationInvalidGender`
-
-**Group:** `known-issues`
-
-**Recommendation:**
-Validate `gender` against an allowed set; reflect allowed values explicitly in Swagger.
+**Test:** `CreatePlayerValidationTests.createPlayerValidationInvalidGender`
 
 ---
 
-### DES-01 GET /player/create changes state (violates REST safety)
+### DES-01 GET /player/create changes state (REST violation)
 
-**Type:** Design / REST Semantics  
+**Type:** Design Defect  
 **Severity:** Major  
 **Status:** Open
 
-**Summary:**  
-Resource creation is exposed via **GET** endpoint `/player/create/{editor}`. GET must be safe (no state change). Current implementation creates a player and returns 200.
+**Summary:** GET endpoint creates a resource; should be POST.
 
-**Observed behavior:**  
-Calling `GET /player/create/supervisor?login=...&screenName=...&role=user&gender=male&age=24&password=...` increases the number of players.
+**Test:** `CreatePlayerRestDesignTests.getCreateViolatesSafety`
 
-**Expected behavior:**  
-Creation must be performed via `POST /player` (or `/player/create`) returning `201 Created` with `Location` header.
+---
+
+### API-02 Wrong status codes for invalid/not‑found playerId
+
+**Type:** API Contract Defect  
+**Severity:** Major  
+**Status:** Open
+
+**Summary:** `POST /player/get` returns 200 instead of 400/404 for invalid playerId.
+
+**Tests:**
+
+- `GetPlayerByIdTests.getByIdBadRequest`
+- `GetPlayerByIdTests.getByIdNotFound`
+
+---
+
+### DES-02 `/player/get` uses POST instead of GET (REST violation)
+
+**Type:** Design Defect
+**Severity:** Major
+**Status:** Open
+
+**Summary:**
+`/player/get` is implemented as `POST`, but retrieving a resource must use `GET`.
+
+**Expected:**
+`GET /player/{id}` or `GET /player/get?playerId=` should return the player.
+
+**Observed:**
+
+- `POST /player/get` returns data
+- `GET /player/get?playerId=` is not supported (or returns unexpected success)
 
 **Impact:**
 
-- Violates HTTP semantics (safe/idempotent methods)
-- Breaks caches, proxies, and crawlers safety assumptions
-- Makes monitoring/auditing harder
+- Violates REST semantics
+- Prevents caching, browser support, proxies, CDNs
+- Harder client implementation
 
-**Reproduction:**  
-Compare `/player/get/all` count before vs after a GET create call.
+**Test:**
+`GetPlayerDesignTests.getByIdDesignSemantics`
 
-**Test reference:**  
-`CreatePlayerRestDesignTests.getCreateViolatesSafety`
+---
 
-**Recommendation:**  
-Move creation to `POST` and make current GET endpoint return `405 Method Not Allowed` (or remove).
+### DES-03 No cache headers for read-only GET resource
+
+**Type:** Design Defect
+**Severity:** Minor
+**Status:** Open
+
+**Summary:**
+`/player/get` responses do not return caching directives.
+Read-only idempotent resource retrieval should include `Cache-Control`.
+
+**Expected:**
+Response should include:
+
+```
+Cache-Control: public, max-age=...
+```
+
+(or similar caching policy)
+
+**Observed:**
+No `Cache-Control` header on successful fetch.
+
+**Impact:**
+
+- Cannot leverage browser/network caching
+- Increased latency and server load
+
+**Test:**
+`GetPlayerDesignTests.getByIdDesignSemantics`
+
+---

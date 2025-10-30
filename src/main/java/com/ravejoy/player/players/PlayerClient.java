@@ -76,6 +76,6 @@ public final class PlayerClient {
   }
 
   public Response getByIdRaw(long id) {
-  return api.post(PlayerEndpoints.GET, new PlayerGetByPlayerIdRequestDto(id));
-}
+    return api.post(PlayerEndpoints.GET, new PlayerGetByPlayerIdRequestDto(id));
+  }
 }
