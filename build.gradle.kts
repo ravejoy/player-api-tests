@@ -71,6 +71,8 @@ tasks.test {
     showStandardStreams = true
     exceptionFormat = TestExceptionFormat.FULL
   }
+
+  systemProperty("allure.results.directory", "${project.buildDir}/allure-results")
 }
 
 // Dedicated task to run only known issues group (ignores suite files)
