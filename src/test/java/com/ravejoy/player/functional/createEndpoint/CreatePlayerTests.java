@@ -34,12 +34,15 @@ public class CreatePlayerTests {
   }
 
   @Description("Supervisor creates USER/ADMIN and the player is persisted (verified via lookup)")
-  @Test(dataProvider = "supervisorMatrix", groups = {Groups.FUNCTIONAL})
+  @Test(
+      dataProvider = "supervisorMatrix",
+      groups = {Groups.FUNCTIONAL})
   public void supervisorCreatesPlayer(Role targetRole) {
     var steps = new PlayerSteps();
     final String login = RunIds.login(targetRole.value());
     final String screen = RunIds.screen("scr");
-    var data = new PlayerCreateData(login, screen, targetRole.value(), 24, Gender.MALE, Password.VALID);
+    var data =
+        new PlayerCreateData(login, screen, targetRole.value(), 24, Gender.MALE, Password.VALID);
 
     Response createResp = steps.createAs(Editor.SUPERVISOR, data);
     ResponseAsserts.assertOkJson(createResp);
@@ -52,7 +55,8 @@ public class CreatePlayerTests {
     PlayerAsserts.assertFetchedMatches(sa, fetched, login, screen, targetRole);
     PlayerAsserts.assertSameEntity(sa, created, fetched);
 
-    sa.assertTrue(PlayerLookup.existsByScreenName(screen), "Persisted list should contain screenName");
+    sa.assertTrue(
+        PlayerLookup.existsByScreenName(screen), "Persisted list should contain screenName");
     sa.assertAll();
   }
 
@@ -63,7 +67,8 @@ public class CreatePlayerTests {
     var steps = new PlayerSteps();
     final String login = RunIds.login(Role.USER.value());
     final String screen = RunIds.screen("scr");
-    var data = new PlayerCreateData(login, screen, Role.USER.value(), 24, Gender.MALE, Password.VALID);
+    var data =
+        new PlayerCreateData(login, screen, Role.USER.value(), 24, Gender.MALE, Password.VALID);
 
     var resp = steps.createAs(Editor.ADMIN, data);
 

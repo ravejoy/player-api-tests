@@ -29,7 +29,12 @@ public class CreatePlayerValidationTests {
 
   private PlayerCreateData valid() {
     return new PlayerCreateData(
-        RunIds.login("ok"), RunIds.screen("scr"), Role.USER.value(), 24, Gender.MALE, Password.VALID);
+        RunIds.login("ok"),
+        RunIds.screen("scr"),
+        Role.USER.value(),
+        24,
+        Gender.MALE,
+        Password.VALID);
   }
 
   private Response call(PlayerSteps steps, PlayerCreateData d) {
@@ -42,33 +47,45 @@ public class CreatePlayerValidationTests {
             new Object[] {
               "empty login",
               (UnaryOperator<PlayerCreateData>)
-                  d -> new PlayerCreateData("", d.screenName(), d.role(), d.age(), d.gender(), d.password())
+                  d ->
+                      new PlayerCreateData(
+                          "", d.screenName(), d.role(), d.age(), d.gender(), d.password())
             },
             new Object[] {
               "empty screenName",
               (UnaryOperator<PlayerCreateData>)
-                  d -> new PlayerCreateData(d.login(), "", d.role(), d.age(), d.gender(), d.password())
+                  d ->
+                      new PlayerCreateData(
+                          d.login(), "", d.role(), d.age(), d.gender(), d.password())
             },
             new Object[] {
               "negative age",
               (UnaryOperator<PlayerCreateData>)
-                  d -> new PlayerCreateData(d.login(), d.screenName(), d.role(), -1, d.gender(), d.password())
+                  d ->
+                      new PlayerCreateData(
+                          d.login(), d.screenName(), d.role(), -1, d.gender(), d.password())
             },
             new Object[] {
               "zero age",
               (UnaryOperator<PlayerCreateData>)
-                  d -> new PlayerCreateData(d.login(), d.screenName(), d.role(), 0, d.gender(), d.password())
+                  d ->
+                      new PlayerCreateData(
+                          d.login(), d.screenName(), d.role(), 0, d.gender(), d.password())
             },
             new Object[] {
               "invalid role",
               (UnaryOperator<PlayerCreateData>)
-                  d -> new PlayerCreateData(d.login(), d.screenName(), "king", d.age(), d.gender(), d.password())
+                  d ->
+                      new PlayerCreateData(
+                          d.login(), d.screenName(), "king", d.age(), d.gender(), d.password())
             })
         .toArray(Object[][]::new);
   }
 
   @Description("Invalid create data must be rejected with 400 Bad Request")
-  @Test(dataProvider = "invalidCreatePassing", groups = {Groups.FUNCTIONAL, Groups.CONTRACT})
+  @Test(
+      dataProvider = "invalidCreatePassing",
+      groups = {Groups.FUNCTIONAL, Groups.CONTRACT})
   public void createPlayerValidation(String title, UnaryOperator<PlayerCreateData> mutate) {
     var steps = new PlayerSteps();
     var broken = mutate.apply(valid());
@@ -83,14 +100,18 @@ public class CreatePlayerValidationTests {
     return new Object[][] {
       {
         (UnaryOperator<PlayerCreateData>)
-            d -> new PlayerCreateData(d.login(), d.screenName(), d.role(), d.age(), "foo", d.password())
+            d ->
+                new PlayerCreateData(
+                    d.login(), d.screenName(), d.role(), d.age(), "foo", d.password())
       }
     };
   }
 
   @Issue("VAL-02")
   @Description("Gender must be validated against allowed values; expected 400")
-  @Test(dataProvider = "invalidGender", groups = {Groups.KNOWN_ISSUES, Groups.CONTRACT})
+  @Test(
+      dataProvider = "invalidGender",
+      groups = {Groups.KNOWN_ISSUES, Groups.CONTRACT})
   public void createPlayerValidationInvalidGender(UnaryOperator<PlayerCreateData> mutate) {
     var steps = new PlayerSteps();
     var resp = call(steps, mutate.apply(valid()));
@@ -111,7 +132,9 @@ public class CreatePlayerValidationTests {
 
   @Issue("VAL-01")
   @Description("Password is required by spec; empty password must be rejected with 400")
-  @Test(dataProvider = "emptyPassword", groups = {Groups.KNOWN_ISSUES, Groups.CONTRACT})
+  @Test(
+      dataProvider = "emptyPassword",
+      groups = {Groups.KNOWN_ISSUES, Groups.CONTRACT})
   public void createPlayerValidationEmptyPassword(UnaryOperator<PlayerCreateData> mutate) {
     var steps = new PlayerSteps();
     var resp = call(steps, mutate.apply(valid()));

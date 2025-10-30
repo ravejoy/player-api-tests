@@ -31,13 +31,15 @@ import org.testng.asserts.SoftAssert;
 @Story("Contract")
 public class CreatePlayerContractTests {
 
-  @Description("CREATE minimal contract: 200 + JSON + id>0, echoes login (baseline that should pass now)")
+  @Description(
+      "CREATE minimal contract: 200 + JSON + id>0, echoes login (baseline that should pass now)")
   @Test(groups = {Groups.FUNCTIONAL, Groups.CONTRACT})
   public void supervisorCreatesUserContractMinimal() {
     var steps = new PlayerSteps();
     final String login = RunIds.login(Role.USER.value());
     final String screen = RunIds.screen("scr");
-    var data = new PlayerCreateData(login, screen, Role.USER.value(), 24, Gender.MALE, Password.VALID);
+    var data =
+        new PlayerCreateData(login, screen, Role.USER.value(), 24, Gender.MALE, Password.VALID);
 
     Response resp = steps.createAs(Editor.SUPERVISOR, data);
 
@@ -49,13 +51,15 @@ public class CreatePlayerContractTests {
   }
 
   @Issue("API-01")
-  @Description("[KNOWN ISSUE] CREATE strict contract shape per Swagger: non-null typed fields. Returns many nulls.")
+  @Description(
+      "[KNOWN ISSUE] CREATE strict contract shape per Swagger: non-null typed fields. Returns many nulls.")
   @Test(groups = {Groups.KNOWN_ISSUES, Groups.CONTRACT})
   public void supervisorCreatesUserContractStrict() {
     var steps = new PlayerSteps();
     final String login = RunIds.login(Role.USER.value());
     final String screen = RunIds.screen("scr");
-    var data = new PlayerCreateData(login, screen, Role.USER.value(), 24, Gender.MALE, Password.VALID);
+    var data =
+        new PlayerCreateData(login, screen, Role.USER.value(), 24, Gender.MALE, Password.VALID);
 
     Response resp = steps.createAs(Editor.SUPERVISOR, data);
     ResponseAsserts.assertStatus(resp, OK);
@@ -71,7 +75,8 @@ public class CreatePlayerContractTests {
   }
 
   @Issue("VAL-01")
-  @Description("[KNOWN ISSUE] Password is required by task description; empty password must be rejected.")
+  @Description(
+      "[KNOWN ISSUE] Password is required by task description; empty password must be rejected.")
   @Test(groups = {Groups.KNOWN_ISSUES, Groups.CONTRACT})
   public void supervisorCreatesUserWithEmptyPassword() {
     var steps = new PlayerSteps();

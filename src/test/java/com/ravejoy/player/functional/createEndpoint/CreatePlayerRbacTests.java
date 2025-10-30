@@ -32,17 +32,20 @@ public class CreatePlayerRbacTests {
   }
 
   @Description("RBAC matrix for editor vs target role; expects 403 for forbidden operations")
-  @Test(dataProvider = "rbacMatrix", groups = {Groups.FUNCTIONAL, Groups.RBAC})
+  @Test(
+      dataProvider = "rbacMatrix",
+      groups = {Groups.FUNCTIONAL, Groups.RBAC})
   public void rbacRestrictions(Editor editor, String targetRole, int expectedStatus) {
     var steps = new PlayerSteps();
 
-    var data = new PlayerCreateData(
-        com.ravejoy.player.testsupport.RunIds.login(targetRole),
-        com.ravejoy.player.testsupport.RunIds.screen(targetRole),
-        targetRole,
-        24,
-        Gender.MALE,
-        Password.VALID);
+    var data =
+        new PlayerCreateData(
+            com.ravejoy.player.testsupport.RunIds.login(targetRole),
+            com.ravejoy.player.testsupport.RunIds.screen(targetRole),
+            targetRole,
+            24,
+            Gender.MALE,
+            Password.VALID);
 
     var resp = steps.createAs(editor, data);
 
