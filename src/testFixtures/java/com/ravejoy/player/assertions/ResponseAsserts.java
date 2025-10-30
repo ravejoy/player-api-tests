@@ -6,6 +6,8 @@ import static org.testng.Assert.assertTrue;
 import com.ravejoy.player.http.StatusCode;
 import com.ravejoy.player.testsupport.HttpHeader;
 import com.ravejoy.player.testsupport.MediaType;
+import com.ravejoy.player.testsupport.helper.Jsons;
+
 import io.restassured.response.Response;
 
 public final class ResponseAsserts {
@@ -33,4 +35,32 @@ public final class ResponseAsserts {
     boolean isJson = ct != null && ct.toLowerCase().startsWith(MediaType.APPLICATION_JSON);
     assertTrue(empty || isJson, "content-type-or-empty");
   }
+
+   public static void assertOkOrNoContentJsonOrEmpty(Response resp) {
+  int s = resp.statusCode();
+  assertTrue(s == StatusCode.OK || s == StatusCode.NO_CONTENT,
+      "Expected 200 or 204, got " + s);
+
+  if (s == StatusCode.OK) {
+    assertJsonOrEmpty(resp);
+  } else {
+    assertEmptyBody(resp);
+  }
+}
+
+public static void assertEmptyBody(Response resp) {
+  assertTrue(Jsons.isEmptyBody(resp), "Expected empty body");
+}
+
+public static void assertNoContent(Response resp) {
+  assertEquals(resp.statusCode(), StatusCode.NO_CONTENT, "status");
+  assertEmptyBody(resp);
+}
+
+public static void assertStatusIn(Response resp, int... allowed) {
+  int s = resp.statusCode();
+  boolean ok = false;
+  for (int a : allowed) if (s == a) { ok = true; break; }
+  assertTrue(ok, "Unexpected status " + s);
+}
 }

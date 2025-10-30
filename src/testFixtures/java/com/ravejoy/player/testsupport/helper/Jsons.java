@@ -17,4 +17,10 @@ public final class Jsons {
       throw new IllegalStateException("Failed to map response to " + type.getSimpleName(), e);
     }
   }
+
+  public static boolean isEmptyBody(Response resp) {
+  var body = resp.getBody().asString();
+  return body == null || body.isBlank() || body.equals("{}") || body.equals("[]");
+}
+
 }
