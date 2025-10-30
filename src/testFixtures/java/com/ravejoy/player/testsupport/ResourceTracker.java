@@ -25,18 +25,14 @@ public final class ResourceTracker {
     Queue<Long> q = TL_QUEUE.get();
     var drained = new ArrayList<Long>(q.size());
     Long id;
-    while ((id = q.poll()) != null) {
-      drained.add(id);
-    }
+    while ((id = q.poll()) != null) drained.add(id);
     return drained;
   }
 
   public static List<Long> drainAllPlayers() {
     var drained = new ArrayList<Long>(GLOBAL_QUEUE.size());
     Long id;
-    while ((id = GLOBAL_QUEUE.poll()) != null) {
-      drained.add(id);
-    }
+    while ((id = GLOBAL_QUEUE.poll()) != null) drained.add(id);
     return drained;
   }
 

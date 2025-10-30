@@ -6,13 +6,10 @@ import com.ravejoy.player.testsupport.PlayerCleanup;
 import com.ravejoy.player.testsupport.ResourceTracker;
 import com.ravejoy.player.testsupport.RunIds;
 import java.util.List;
-import org.testng.IInvokedMethod;
-import org.testng.IInvokedMethodListener;
 import org.testng.ISuite;
 import org.testng.ISuiteListener;
-import org.testng.ITestResult;
 
-public final class CleanupListener implements IInvokedMethodListener, ISuiteListener {
+public final class CleanupListener implements ISuiteListener {
 
   private static final String CLEANUP_EDITOR = "supervisor";
 
@@ -22,32 +19,20 @@ public final class CleanupListener implements IInvokedMethodListener, ISuiteList
   }
 
   @Override
-  public void afterInvocation(IInvokedMethod method, ITestResult result) {
-    if (!method.isTestMethod()) return;
-
-    List<Long> ids = ResourceTracker.drainPlayers();
-    if (ids.isEmpty()) return;
-
-    var cleaner = new PlayerCleanup(new PlayerClient(new ApiClient()));
-    System.out.printf(
-        "[CLEANUP][afterInvocation] %s#%s ids=%s%n",
-        method.getTestMethod().getRealClass().getSimpleName(),
-        method.getTestMethod().getMethodName(),
-        ids);
-    cleaner.deleteByIds(CLEANUP_EDITOR, ids);
-  }
-
-  @Override
   public void onFinish(ISuite suite) {
-    System.out.printf("[CLEANUP][onFinish] suite=%s%n", suite.getName());
+    System.out.printf(
+        "[CLEANUP][onFinish] suite=%s sweepPrefix=%s%n", suite.getName(), RunIds.prefix());
 
-    List<Long> left = ResourceTracker.drainAllPlayers();
-    if (left.isEmpty()) {
-      System.out.println("[CLEANUP][onFinish] nothing to delete");
-      return;
-    }
     var cleaner = new PlayerCleanup(new PlayerClient(new ApiClient()));
-    System.out.printf("[CLEANUP][onFinish] leftover ids=%s%n", left);
-    cleaner.deleteByIds(CLEANUP_EDITOR, left);
+
+    List<Long> leftover = ResourceTracker.drainAllPlayers();
+    if (leftover.isEmpty()) {
+      System.out.println("[CLEANUP][onFinish] no explicit leftovers in tracker");
+    } else {
+      System.out.printf("[CLEANUP][onFinish] leftover ids=%s%n", leftover);
+      cleaner.deleteByIds(CLEANUP_EDITOR, leftover);
+    }
+
+    cleaner.sweepByPrefix(CLEANUP_EDITOR, RunIds.prefix());
   }
 }
