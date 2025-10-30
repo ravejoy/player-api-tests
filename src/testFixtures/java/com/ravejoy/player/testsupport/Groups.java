@@ -7,4 +7,6 @@ public final class Groups {
   public static final String FUNCTIONAL = "functional";
   public static final String RBAC = "rbac";
   public static final String KNOWN_ISSUES = "known-issues";
+  public static final String CONTRACT = "contract";
+  public static final String DESIGN = "design";
 }
