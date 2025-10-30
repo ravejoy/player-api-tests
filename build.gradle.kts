@@ -71,6 +71,8 @@ tasks.test {
     showStandardStreams = true
     exceptionFormat = TestExceptionFormat.FULL
   }
+
+  systemProperty("allure.results.directory", "${project.buildDir}/allure-results")
 }
 
 // Dedicated task to run only known issues group (ignores suite files)
@@ -88,6 +90,25 @@ tasks.register<Test>("knownIssues") {
     exceptionFormat = TestExceptionFormat.FULL
   }
 }
+
+tasks.register("allureServe") {
+    dependsOn("test")
+    doLast {
+        exec {
+            commandLine("allure", "serve", "build/allure-results")
+        }
+    }
+}
+
+tasks.register("allureReport") {
+    dependsOn("test")
+    doLast {
+        exec {
+            commandLine("allure", "generate", "build/allure-results", "-o", "build/allure-report", "--clean")
+        }
+    }
+}
+
 
 jacoco {
   toolVersion = "0.8.12"
