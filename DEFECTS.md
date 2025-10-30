@@ -2,17 +2,19 @@
 
 ## Index
 
-| ID      | Title                                      | Type                  | Status |
-| ------- | ------------------------------------------ | --------------------- | ------ |
-| RBAC-01 | Admin cannot create USER                   | Business Logic Defect | Open   |
-| API-01  | Null fields in create response             | API Contract Defect   | Open   |
-| VAL-01  | Password not validated                     | Validation Defect     | Open   |
-| VAL-02  | Invalid gender accepted                    | Validation Defect     | Open   |
-| DES-01  | GET creates resource (REST violation)      | Design Defect         | Open   |
-| API-02  | Wrong codes for invalid/not-found playerId | API Contract Defect   | Open   |
-| DES-02  | `/player/get` uses POST instead of GET     | Design Defect         | Open   |
-| DES-03  | Missing cache headers for GET resource     | Design Defect         | Open   |
-| VAL-03  | Duplicate login overwrites existing user   | Data Integrity Defect | Open   |
+| ID      | Title                                         | Type                  | Status |
+| ------- | --------------------------------------------- | --------------------- | ------ |
+| RBAC-01 | Admin cannot create USER                      | Business Logic Defect | Open   |
+| API-01  | Null fields in create response                | API Contract Defect   | Open   |
+| VAL-01  | Password not validated                        | Validation Defect     | Open   |
+| VAL-02  | Invalid gender accepted                       | Validation Defect     | Open   |
+| DES-01  | GET creates resource (REST violation)         | Design Defect         | Open   |
+| API-02  | Wrong codes for invalid/not-found playerId    | API Contract Defect   | Open   |
+| DES-02  | `/player/get` uses POST instead of GET        | Design Defect         | Open   |
+| DES-03  | Missing cache headers for GET resource        | Design Defect         | Open   |
+| VAL-03  | Duplicate login overwrites existing user      | Data Integrity Defect | Open   |
+| RBAC-02 | User can delete players (should be forbidden) | Business Logic Defect | Open   |
+| API-03  | Duplicate login overwrites existing user      | Data Integrity Defect | Open   |
 
 ---
 
@@ -186,3 +188,56 @@ No `Cache-Control` header on successful fetch.
 
 **Test:**
 `CreatePlayerValidationTests.duplicateLoginShouldBeRejected`
+
+---
+
+### RBAC-02 User is able to delete players (should be forbidden)
+
+**Type:** Business Logic Defect
+**Severity:** Critical
+**Status:** Open
+
+**Summary:**
+Requests with `editor=user` can delete players (both `role=user` and `role=admin`). According to the role model, a **user must not be allowed to delete**.
+
+**Expected:** `403 Forbidden`
+**Observed:** `204 No Content` (entity actually removed)
+
+**Reproduction (examples):**
+
+- Create a player (any role), then call
+  `DELETE /player/delete/user` with body `{ "playerId": <createdId> }` → **204**.
+- Same result for target roles `user` and `admin`.
+
+**Impact:**
+
+- Regular users can remove other accounts → data loss, privilege escalation.
+
+**Tests:**
+`DeletePlayerRbacTest.deleteIsForbiddenFor(USER, USER)`
+`DeletePlayerRbacTest.deleteIsForbiddenFor(USER, ADMIN)`
+
+**Recommendation:**
+Enforce RBAC check for delete: deny when `editor=user` (regardless of target role).
+
+---
+
+### API-03 Wrong status codes on DELETE
+
+**Type:** API Contract Defect
+**Severity:** Major
+**Status:** Open
+
+**Summary:** `/player/delete/{editor}` returns 200/empty for invalid (0, -1) or unknown ids instead of 400/404.
+
+**Expected:**
+
+- 400 Bad Request for invalid ids (0, negative)
+- 404 Not Found for unknown ids
+
+**Observed:** 200 OK with empty body.
+
+**Tests:**
+
+- DeletePlayerContractTests.deleteBadRequest
+- DeletePlayerContractTests.deleteUnknownId

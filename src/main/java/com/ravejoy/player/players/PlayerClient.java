@@ -78,4 +78,9 @@ public final class PlayerClient {
   public Response getByIdRaw(long id) {
     return api.post(PlayerEndpoints.GET, new PlayerGetByPlayerIdRequestDto(id));
   }
+
+  public Response deleteRaw(String editor, long playerId) {
+    return api.deleteWithBody(
+        PlayerEndpoints.DELETE + editor, new PlayerDeleteRequestDto(playerId));
+  }
 }
